@@ -66,13 +66,39 @@ const char index_html[] PROGMEM = R"raw(
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="VEND.ME">
     <link rel="apple-touch-icon" href="https://i.imgur.com/Am42M3S.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --neon-glow: #00ffde; --background-color: #0d0d0d; --container-bg: #1a1a1a;
-            --border-color: #2a2a2a; --text-color: #e0e0e0; --success-color: #00ff8c; --error-color: #ff4d4d;
-            --font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+            --neon-glow: #f0f; /* Hot Pink/Magenta */
+            --neon-secondary: #0ff; /* Cyan */
+            --background-color: #0c0c1e; /* Deep Blue/Purple */
+            --container-bg: rgba(26, 26, 52, 0.8); /* Translucent Dark Blue */
+            --border-color: #8e2de2; /* Purple */
+            --text-color: #e0e0e0;
+            --success-color: #0f0; /* Bright Green */
+            --error-color: #f00; /* Bright Red */
+            --font-family: 'Orbitron', sans-serif;
         }
-        body { background-color: var(--background-color); color: var(--text-color); font-family: var(--font-family); margin: 0; padding: 0; overflow: hidden; }
+
+        @keyframes grid-pan {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 100% 100%; }
+        }
+
+        body {
+            background-color: var(--background-color);
+            background-image:
+                linear-gradient(var(--border-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: grid-pan 30s linear infinite;
+            color: var(--text-color);
+            font-family: var(--font-family);
+            margin: 0; padding: 0; overflow: hidden;
+            text-shadow: 0 0 2px var(--text-color);
+        }
         .page { display: flex; flex-direction: column; width: 100vw; height: 100vh; align-items: center; justify-content: center; }
         .hidden { display: none !important; }
 
@@ -83,6 +109,13 @@ const char index_html[] PROGMEM = R"raw(
         .login-input:focus { outline: none; border-color: var(--neon-glow); box-shadow: 0 0 10px var(--neon-glow); }
         .login-button { width: 100%; padding: 15px; border-radius: 10px; border: none; background-color: var(--neon-glow); color: #000; font-size: 18px; font-weight: bold; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 0 10px var(--neon-glow); }
         .login-button:hover { box-shadow: 0 0 20px var(--neon-glow), 0 0 30px var(--neon-glow); }
+
+        #back-to-menu-btn {
+            background: #2a2a2a; border: 1px solid #444; color: var(--text-color);
+            padding: 8px 12px; border-radius: 8px; cursor: pointer;
+            transition: all .2s; font-size: 16px; font-weight: bold;
+        }
+        #back-to-menu-btn:hover { border-color: var(--neon-glow); color: var(--neon-glow); }
 
         /* --- Main Menu Page --- */
         #menu-page h2 { font-size: 32px; color: var(--neon-glow); text-shadow: 0 0 10px var(--neon-glow); margin-bottom: 40px; }
@@ -163,9 +196,9 @@ const char index_html[] PROGMEM = R"raw(
 
     <div id="app-page" class="page hidden">
         <div id="app-header">
-            <button id="back-to-menu" class="login-button" style="width:auto;">&larr; Menu</button>
+            <button id="back-to-menu-btn">&larr; Menu</button>
             <h1>VEND.ME</h1>
-            <div id="status-indicator" style="color:var(--success-color);">● Connected</div>
+            <button id="mute-btn">🔊</button>
         </div>
         <div id="app-main">
             <nav id="game-nav">
@@ -179,6 +212,8 @@ const char index_html[] PROGMEM = R"raw(
             <div id="cheat-area"></div>
         </div>
     </div>
+
+    <audio id="bg-music" loop></audio>
 
     <!-- Modals -->
     <div id="status-window" class="modal-overlay hidden">
@@ -211,7 +246,9 @@ const char index_html[] PROGMEM = R"raw(
                 cheatArea: document.getElementById('cheat-area'),
                 gameList: document.getElementById('game-list'),
                 userNameEl: document.getElementById('user-name'),
-                backToMenuButton: document.getElementById('back-to-menu')
+                backToMenuButton: document.getElementById('back-to-menu-btn'),
+                muteButton: document.getElementById('mute-btn'),
+                backgroundMusic: document.getElementById('bg-music')
             };
             const gameData = {
                 "Warzone": {
@@ -355,7 +392,10 @@ const char index_html[] PROGMEM = R"raw(
                     button.className = 'game-button';
                     button.textContent = gameName;
                     if (gameName === activeGame) button.classList.add('active');
-                    button.addEventListener('click', () => loadGameUI(gameName));
+                    button.addEventListener('click', () => {
+                        playSound(clickSound);
+                        loadGameUI(gameName);
+                    });
                     elements.gameList.appendChild(button);
                 });
             }
@@ -465,6 +505,8 @@ const char index_html[] PROGMEM = R"raw(
                 return itemDiv;
             }
 
+            const phonkTrack = 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjQ1LjEwMAAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/24DEAAAAAAAAAAAAAAAAAAAAAAAAPRr2agaGnG5tS0Fz5i3pGk2/p5s3/gYpB8A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4//uA8A=';
+
             // --- Event Listeners & Initial Setup ---
             elements.loginButton.addEventListener('click', () => {
                 playSound(clickSound);
@@ -472,12 +514,23 @@ const char index_html[] PROGMEM = R"raw(
                 elements.userNameEl.textContent = currentUser;
                 buildMainMenu();
                 showPage('menu');
+                // Start music on first interaction
+                if (elements.backgroundMusic.src === '') {
+                    elements.backgroundMusic.src = phonkTrack;
+                }
+                elements.backgroundMusic.play().catch(e => console.log("Autoplay blocked"));
             });
 
             elements.backToMenuButton.addEventListener('click', () => {
                 playSound(clickSound);
                 elements.appMain.classList.remove('focus-mode');
                 showPage('menu');
+            });
+
+            elements.muteButton.addEventListener('click', () => {
+                playSound(clickSound);
+                elements.backgroundMusic.muted = !elements.backgroundMusic.muted;
+                elements.muteButton.textContent = elements.backgroundMusic.muted ? '🔇' : '🔊';
             });
 
             document.querySelectorAll('.close-button').forEach(button => {
