@@ -619,13 +619,24 @@ const char index_html[] PROGMEM = R"raw(
             });
 
             elements.enterButton.addEventListener('click', () => {
-                // This is the true start of the app, and the key to fixing mobile audio
-                audioContext.resume().then(() => {
-                    playSound(clickSound);
-                    buildMainMenu();
-                    showPage('menu');
-                    startMusic();
-                });
+                console.log("Enter button clicked.");
+                try {
+                    // This is the true start of the app, and the key to fixing mobile audio
+                    console.log("Attempting to resume AudioContext...");
+                    audioContext.resume().then(() => {
+                        console.log("AudioContext resumed successfully.");
+                        playSound(clickSound);
+                        console.log("Building main menu...");
+                        buildMainMenu();
+                        console.log("Showing menu page...");
+                        showPage('menu');
+                        console.log("Starting music...");
+                        startMusic();
+                        console.log("Enter button tasks complete.");
+                    }).catch(e => console.error("Error resuming AudioContext:", e));
+                } catch (e) {
+                    console.error("Critical error in enterButton listener:", e);
+                }
             });
 
             elements.backToMenuButton.addEventListener('click', () => {
