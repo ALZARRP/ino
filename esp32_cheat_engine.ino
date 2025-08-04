@@ -446,7 +446,93 @@ const char index_html[] PROGMEM = R"raw(
             line-height: 60px;
         }
 
-        #console-log {
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .config-btn {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            color: var(--text-color);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .config-btn:hover {
+            border-color: var(--neon-glow);
+            color: var(--neon-glow);
+        }
+        #theme-switcher {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .theme-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid var(--background-color);
+            transition: all .2s;
+        }
+        .theme-dot:hover, .theme-dot.active {
+            transform: scale(1.2);
+            border-color: var(--neon-glow);
+        }
+
+        #game-nav {
+            display: flex;
+            flex-direction: column;
+        }
+        #game-list {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        #sidebar-footer {
+            padding: 10px;
+            border-top: 1px solid var(--border-color);
+        }
+        #hw-stats {
+            padding: 10px;
+            font-size: 12px;
+            color: #888;
+        }
+        #hw-stats p { margin: 4px 0; }
+        #hw-stats span { color: var(--text-color); font-weight: bold; }
+
+        .draggable {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: var(--container-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 2000;
+            display: none; /* Hidden by default */
+        }
+        .draggable-header {
+            padding: 10px 15px;
+            cursor: move;
+            background-color: #252525;
+            border-bottom: 1px solid var(--border-color);
+            border-radius: 15px 15px 0 0;
+            color: var(--neon-glow);
+            user-select: none;
+        }
+        .close-btn {
+            float: right;
+            cursor: pointer;
+            font-size: 20px;
+        }
+        .draggable-content {
+            padding: 20px;
+        }
+
+        #news-ticker-container {
             position: fixed;
             bottom: 0;
             left: 0;
@@ -454,13 +540,18 @@ const char index_html[] PROGMEM = R"raw(
             height: 30px;
             background: #111;
             border-top: 1px solid var(--border-color);
-            color: #888;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            padding: 5px 10px;
-            box-sizing: border-box;
             overflow: hidden;
+        }
+        #news-ticker {
+            display: inline-block;
             white-space: nowrap;
+            color: #888;
+            line-height: 30px;
+            animation: ticker-scroll 40s linear infinite;
+        }
+        @keyframes ticker-scroll {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
         }
     </style>
 </head>
@@ -478,12 +569,33 @@ const char index_html[] PROGMEM = R"raw(
     <div id="app-container">
         <header>
             <h1>VEND.ME</h1>
-            <div id="status-indicator">Connected: Secure</div>
+            <div class="header-controls">
+                <div id="config-buttons">
+                    <button class="config-btn">Save Config</button>
+                    <button class="config-btn">Load Config</button>
+                </div>
+                <div id="theme-switcher">
+                    <span>Theme:</span>
+                    <div class="theme-dot" style="background-color: #00ffde;" data-color="#00ffde"></div>
+                    <div class="theme-dot" style="background-color: #ff007f;" data-color="#ff007f"></div>
+                    <div class="theme-dot" style="background-color: #7f00ff;" data-color="#7f00ff"></div>
+                </div>
+                <div id="status-indicator">Connected: Secure</div>
+            </div>
         </header>
 
         <main>
             <nav id="game-nav">
-                <!-- Game buttons will be injected here by JS -->
+                <div id="game-list">
+                    <!-- Game buttons will be injected here by JS -->
+                </div>
+                <div id="sidebar-footer">
+                    <div id="hw-stats">
+                        <p>CPU: <span id="cpu-load">--</span>%</p>
+                        <p>RAM: <span id="ram-usage">--</span>%</p>
+                    </div>
+                    <button id="about-button" class="game-button">About</button>
+                </div>
             </nav>
             <div id="cheat-area">
                 <div id="cheat-content">
@@ -493,7 +605,22 @@ const char index_html[] PROGMEM = R"raw(
         </main>
 
         <div id="panic-button">PANIC</div>
-        <div id="console-log"> > System Initialized. Waiting for command...</div>
+    </div>
+
+    <div id="about-window" class="draggable">
+        <div class="draggable-header">About VEND.ME <span class="close-btn">&times;</span></div>
+        <div class="draggable-content">
+            <p>Version: 1.3.37</p>
+            <p>Build Date: 2024-07-21</p>
+            <p>Created by: Jules</p>
+            <p>&copy; All Rights Reserved</p>
+        </div>
+    </div>
+
+    <div id="news-ticker-container">
+        <div id="news-ticker">
+            <!-- News items will be injected by JS -->
+        </div>
     </div>
 
     <script>
@@ -598,39 +725,64 @@ const char index_html[] PROGMEM = R"raw(
 
         // --- UI LOGIC ---
         document.addEventListener('DOMContentLoaded', () => {
+            // --- Element Selectors ---
             const loginButton = document.getElementById('login-button');
             const loginContainer = document.getElementById('login-container');
             const appContainer = document.getElementById('app-container');
-            const gameNav = document.getElementById('game-nav');
+            const gameList = document.getElementById('game-list');
             const cheatContent = document.getElementById('cheat-content');
-            const consoleLog = document.getElementById('console-log');
             const panicButton = document.getElementById('panic-button');
+            const themeSwitcher = document.getElementById('theme-switcher');
+            const configButtons = document.querySelectorAll('.config-btn');
+            const aboutButton = document.getElementById('about-button');
+            const aboutWindow = document.getElementById('about-window');
+            const closeAbout = aboutWindow.querySelector('.close-btn');
+            const newsTicker = document.getElementById('news-ticker');
+            const cpuLoadEl = document.getElementById('cpu-load');
+            const ramUsageEl = document.getElementById('ram-usage');
 
-            let consoleLines = ['> System Initialized. Waiting for command...'];
+            // --- App State ---
+            const newsItems = [
+                'New profiles for BO6 added.', 'Kernel-level injection stability improved.', 'Security module updated.', 'Fortnite ESP rendering optimized.', 'Stealth mode now fully undetectable.'
+            ];
 
-            function updateConsole(line) {
-                consoleLines.push(`> ${line}`);
-                if (consoleLines.length > 10) consoleLines.shift();
-                consoleLog.textContent = consoleLines[consoleLines.length - 1];
+            // --- Core Functions ---
+            function showAlert(message, type = 'success') {
+                const alert = document.createElement('div');
+                alert.className = `alert ${type}`;
+                alert.textContent = message;
+                document.body.appendChild(alert);
+
+                setTimeout(() => alert.classList.add('show'), 10);
+                setTimeout(() => {
+                    alert.classList.remove('show');
+                    setTimeout(() => document.body.removeChild(alert), 500);
+                }, 3000);
             }
 
             // Login
             loginButton.addEventListener('click', () => {
                 playSound(clickSound);
-                updateConsole('Authentication successful. Loading main interface...');
                 loginContainer.style.display = 'none';
                 appContainer.style.display = 'flex';
+                initApp();
+            });
+
+            function initApp() {
                 loadGames();
                 // Load first game by default
                 if (Object.keys(games).length > 0) {
-                    loadCheatsForGame(Object.keys(games)[0]);
-                    gameNav.querySelector('.game-button').classList.add('active');
+                    const firstGame = Object.keys(games)[0];
+                    loadCheatsForGame(firstGame);
+                    gameList.querySelector('.game-button').classList.add('active');
                 }
-            });
+                startHardwareStats();
+                populateNewsTicker();
+            }
 
             // Populate game navigation
             function loadGames() {
-                gameNav.innerHTML = '';
+                gameList.innerHTML = '';
                 for (const gameName in games) {
                     const button = document.createElement('button');
                     button.className = 'game-button';
@@ -642,16 +794,14 @@ const char index_html[] PROGMEM = R"raw(
                         e.target.classList.add('active');
                         loadCheatsForGame(gameName);
                     });
-                    gameNav.appendChild(button);
+                    gameList.appendChild(button);
                 }
             }
 
             // Load cheats for a selected game
             function loadCheatsForGame(gameName) {
                 cheatContent.innerHTML = '';
-                updateConsole(`Loading cheats for ${gameName}...`);
                 const gameData = games[gameName];
-
                 const title = document.createElement('h2');
                 title.textContent = `${gameName} Cheats`;
                 cheatContent.appendChild(title);
@@ -659,7 +809,6 @@ const char index_html[] PROGMEM = R"raw(
                 for (const category in gameData) {
                     const categoryDiv = document.createElement('div');
                     categoryDiv.className = 'cheat-category';
-
                     const categoryTitle = document.createElement('h3');
                     categoryTitle.textContent = category;
                     categoryDiv.appendChild(categoryTitle);
@@ -667,7 +816,6 @@ const char index_html[] PROGMEM = R"raw(
                     gameData[category].forEach(cheat => {
                         const itemDiv = document.createElement('div');
                         itemDiv.className = 'cheat-item';
-
                         const label = document.createElement('label');
                         label.textContent = cheat.name;
                         itemDiv.appendChild(label);
@@ -682,7 +830,6 @@ const char index_html[] PROGMEM = R"raw(
                                 const action = e.target.checked ? 'Activated' : 'Deactivated';
                                 playSound(e.target.checked ? activateSound : deactivateSound);
                                 showAlert(`${cheat.name} ${action}`, e.target.checked ? 'success' : 'error');
-                                updateConsole(`${cheat.name} ${action}.`);
                             });
                             const sliderSpan = document.createElement('span');
                             sliderSpan.className = 'toggle-slider';
@@ -701,13 +848,10 @@ const char index_html[] PROGMEM = R"raw(
                             const valueSpan = document.createElement('span');
                             valueSpan.className = 'slider-value';
                             valueSpan.textContent = slider.value;
-                            slider.addEventListener('input', () => {
-                                valueSpan.textContent = slider.value;
-                            });
+                            slider.addEventListener('input', () => valueSpan.textContent = slider.value);
                             slider.addEventListener('change', () => {
                                 playSound(clickSound);
                                 showAlert(`${cheat.name} set to ${slider.value}`);
-                                updateConsole(`${cheat.name} set to ${slider.value}.`);
                             });
                             sliderContainer.appendChild(slider);
                             sliderContainer.appendChild(valueSpan);
@@ -719,34 +863,90 @@ const char index_html[] PROGMEM = R"raw(
                 }
             }
 
-            // Show alert
-            function showAlert(message, type = 'success') {
-                const alert = document.createElement('div');
-                alert.className = `alert ${type}`;
-                alert.textContent = message;
-                document.body.appendChild(alert);
-
-                setTimeout(() => {
-                    alert.classList.add('show');
-                }, 10);
-
-                setTimeout(() => {
-                    alert.classList.remove('show');
-                    setTimeout(() => {
-                        document.body.removeChild(alert);
-                    }, 500);
-                }, 3000);
-            }
-
-            // Panic button
+            // --- Event Listeners & UI Handlers ---
             panicButton.addEventListener('click', () => {
                 playSound(deactivateSound);
                 document.body.innerHTML = '<div style="width:100vw;height:100vh;display:flex;justify-content:center;align-items:center;color:white;font-size:24px;font-family:sans-serif;">Connection Lost...</div>';
-                // In a real scenario, this might redirect to google.com
-                // window.location.href = "https://www.google.com";
             });
 
-            // Prevent context menu
+            themeSwitcher.addEventListener('click', (e) => {
+                if (e.target.classList.contains('theme-dot')) {
+                    const color = e.target.dataset.color;
+                    document.documentElement.style.setProperty('--neon-glow', color);
+                    document.querySelectorAll('.theme-dot').forEach(dot => dot.classList.remove('active'));
+                    e.target.classList.add('active');
+                    playSound(clickSound);
+                }
+            });
+
+            configButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    playSound(clickSound);
+                    showAlert(`${btn.textContent} successful!`, 'success');
+                });
+            });
+
+            aboutButton.addEventListener('click', () => {
+                playSound(clickSound);
+                aboutWindow.style.display = 'block';
+            });
+
+            closeAbout.addEventListener('click', () => {
+                playSound(clickSound);
+                aboutWindow.style.display = 'none';
+            });
+
+            function makeDraggable(elmnt) {
+                let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+                const header = elmnt.querySelector(".draggable-header");
+                if (header) {
+                    header.onmousedown = dragMouseDown;
+                } else {
+                    elmnt.onmousedown = dragMouseDown;
+                }
+
+                function dragMouseDown(e) {
+                    e = e || window.event;
+                    e.preventDefault();
+                    pos3 = e.clientX;
+                    pos4 = e.clientY;
+                    document.onmouseup = closeDragElement;
+                    document.onmousemove = elementDrag;
+                }
+
+                function elementDrag(e) {
+                    e = e || window.event;
+                    e.preventDefault();
+                    pos1 = pos3 - e.clientX;
+                    pos2 = pos4 - e.clientY;
+                    pos3 = e.clientX;
+                    pos4 = e.clientY;
+                    elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+                    elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+                }
+
+                function closeDragElement() {
+                    document.onmouseup = null;
+                    document.onmousemove = null;
+                }
+            }
+            makeDraggable(aboutWindow);
+
+            function startHardwareStats() {
+                setInterval(() => {
+                    cpuLoadEl.textContent = (Math.random() * (90 - 50) + 50).toFixed(2);
+                    ramUsageEl.textContent = (Math.random() * (75 - 40) + 40).toFixed(2);
+                }, 1500);
+            }
+
+            function populateNewsTicker() {
+                let fullText = '';
+                for (let i = 0; i < 5; i++) {
+                    fullText += newsItems.join(' +++ ') + ' +++ ';
+                }
+                newsTicker.textContent = fullText;
+            }
+
             window.addEventListener('contextmenu', e => e.preventDefault());
         });
     </script>
