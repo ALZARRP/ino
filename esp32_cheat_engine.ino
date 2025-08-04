@@ -897,6 +897,7 @@ const char index_html[] PROGMEM = R"raw(
 
         // --- UI LOGIC ---
         document.addEventListener('DOMContentLoaded', () => {
+          try {
             // --- App State & Selectors ---
             let currentUser = 'User';
             const newsItems = [
@@ -1182,6 +1183,13 @@ const char index_html[] PROGMEM = R"raw(
             Object.values(modals).forEach(modal => modal.classList.add('hidden'));
             showPage('login');
             window.addEventListener('contextmenu', e => e.preventDefault());
+          } catch (e) {
+            document.body.innerHTML = `<div style="color:red;font-family:sans-serif;padding:20px;">
+                                           <h1>A critical error occurred.</h1>
+                                           <p>Please reload. Error: ${e.message}</p>
+                                       </div>`;
+            console.error(e);
+          }
         });
     </script>
 </body>
