@@ -277,7 +277,6 @@ const char index_html[] PROGMEM = R"raw(
     <div id="app-page" class="page hidden">
         <div id="app-header">
             <h1>VEND.ME</h1>
-            <button id="mute-btn">🔊</button>
         </div>
         <button id="back-to-menu-btn">&larr; Menu</button>
         <button id="logout-btn">Logout</button>
