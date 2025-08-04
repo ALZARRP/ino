@@ -183,6 +183,17 @@ const char index_html[] PROGMEM = R"raw(
         #app-page { justify-content: flex-start; }
         #app-header { width: 100%; background-color: var(--container-bg); padding: 10px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.3); box-sizing: border-box; position: fixed; top: 0; left: 0; z-index: 400; }
         #app-header h1 { color: var(--neon-glow); font-size: 24px; margin: 0; text-shadow: 0 0 5px var(--neon-glow); }
+        #app-header .settings-btn {
+            position: absolute;
+            right: 60px; /* Adjust as needed */
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 24px;
+            cursor: pointer;
+        }
         #app-main { display: flex; width: 100%; flex-grow: 1; overflow: hidden; }
         #game-nav { width: 200px; background-color: var(--container-bg); border-right: 1px solid var(--border-color); flex-shrink: 0; display: flex; flex-direction: column; }
         #user-profile { padding: 20px; text-align: center; border-bottom: 1px solid var(--border-color); }
@@ -199,6 +210,41 @@ const char index_html[] PROGMEM = R"raw(
         .tab-button { background: none; border: none; color: #888; padding: 10px 20px; cursor: pointer; font-size: 16px; border-bottom: 2px solid transparent; }
         .tab-button.active { color: var(--neon-glow); border-bottom-color: var(--neon-glow); }
         .tab-content { flex-grow: 1; overflow-y: auto; padding-right: 10px; } /* Keep scroll for content overflow */
+
+        .cheat-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .search-bar {
+            flex-grow: 1;
+            background-color: #252525;
+            border: 1px solid #333;
+            color: var(--text-color);
+            padding: 8px;
+            border-radius: 5px;
+        }
+        .control-btn {
+            background-color: var(--container-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .config-manager {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .config-select, .config-name-input {
+            flex-grow: 1;
+            background-color: #252525;
+            border: 1px solid #333;
+            color: var(--text-color);
+            padding: 8px;
+            border-radius: 5px;
+        }
 
         /* Non-scrolling body and specific layout for iPhone 14 Pro Max */
         @media (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) {
@@ -246,6 +292,19 @@ const char index_html[] PROGMEM = R"raw(
         #status-window h2 { color: var(--neon-glow); text-shadow: 0 0 10px var(--neon-glow); font-size: 32px; margin-bottom: 40px; }
         .status-grid { display: flex; flex-direction: column; gap: 20px; width: 80%; max-width: 500px; }
         .status-item { background: var(--container-bg); padding: 20px; border-radius: 15px; border: 1px solid var(--border-color); text-align: center; }
+
+        /* Settings Modal Styles */
+        .settings-content { display: flex; flex-direction: column; gap: 25px; width: 80%; max-width: 500px; }
+        .setting-group { display: flex; justify-content: space-between; align-items: center; }
+        .setting-group label { font-size: 18px; }
+        .setting-group select, .setting-group input {
+            background-color: #252525;
+            border: 1px solid #333;
+            color: var(--text-color);
+            padding: 8px;
+            border-radius: 5px;
+            font-family: var(--font-family);
+        }
         .status-item h4 { margin: 0 0 10px; color: #aaa; } .status-item p { margin: 0; font-size: 20px; font-weight: bold; } .status-ok { color: var(--success-color); }
         .alert { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); padding: 15px 25px; border-radius: 10px; color: white; font-weight: bold; z-index: 2000; transition: top 0.5s ease-in-out; }
         .alert.show { top: 30px; }
@@ -265,9 +324,6 @@ const char index_html[] PROGMEM = R"raw(
         </div>
     </div>
 
-    <div id="enter-page" class="page hidden">
-        <button id="enter-button" class="login-button" style="width: auto; padding: 20px 40px; font-size: 24px;">Click to Enter</button>
-    </div>
 
     <div id="menu-page" class="page hidden">
         <h2>Main Menu</h2>
@@ -277,6 +333,7 @@ const char index_html[] PROGMEM = R"raw(
     <div id="app-page" class="page hidden">
         <div id="app-header">
             <h1>VEND.ME</h1>
+            <button class="settings-btn">⚙️</button>
         </div>
         <button id="back-to-menu-btn">&larr; Menu</button>
         <button id="logout-btn">Logout</button>
@@ -296,6 +353,43 @@ const char index_html[] PROGMEM = R"raw(
     <audio id="bg-music" loop></audio>
 
     <!-- Modals -->
+    <div id="settings-modal" class="modal-overlay hidden">
+        <button class="close-button" data-modal="settings-modal">&times;</button>
+        <h2>Settings</h2>
+        <div class="settings-content">
+            <div class="setting-group">
+                <label for="theme-select">Theme</label>
+                <select id="theme-select">
+                    <option value="neon">Neon</option>
+                    <option value="dark">Dark</option>
+                    <option value="light">Light</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label for="accent-color-picker">Accent Color</label>
+                <input type="color" id="accent-color-picker" value="#f0f">
+            </div>
+            <div class="setting-group">
+                <label>Font Size</label>
+                <div>
+                    <button data-font-size="small">S</button>
+                    <button data-font-size="medium">M</button>
+                    <button data-font-size="large">L</button>
+                </div>
+            </div>
+            <div class="setting-group">
+                <label for="anim-bg-toggle">Animated Background</label>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="anim-bg-toggle" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <hr>
+            <button id="reset-settings-btn">Reset All Settings</button>
+            <button id="whats-new-btn">What's New</button>
+        </div>
+    </div>
+
     <div id="status-window" class="modal-overlay hidden">
         <button class="close-button back-button" data-modal="status-window">&larr; Back to Menu</button>
         <h2>System Status</h2>
@@ -312,17 +406,16 @@ const char index_html[] PROGMEM = R"raw(
             let currentUser = 'User';
             const pages = {
                 login: document.getElementById('login-page'),
-                enter: document.getElementById('enter-page'),
                 menu: document.getElementById('menu-page'),
                 app: document.getElementById('app-page')
             };
             const modals = {
-                status: document.getElementById('status-window')
+                status: document.getElementById('status-window'),
+                settings: document.getElementById('settings-modal')
             };
             const elements = {
                 usernameInput: document.getElementById('username-input'),
                 loginButton: document.getElementById('login-button'),
-                enterButton: document.getElementById('enter-button'),
                 menuGrid: document.getElementById('menu-grid'),
                 appMain: document.getElementById('app-main'),
                 cheatArea: document.getElementById('cheat-area'),
@@ -330,7 +423,9 @@ const char index_html[] PROGMEM = R"raw(
                 userNameEl: document.getElementById('user-name'),
                 backToMenuButton: document.getElementById('back-to-menu-btn'),
                 logoutButton: document.getElementById('logout-btn'),
-                backgroundMusic: document.getElementById('bg-music')
+                muteButton: document.getElementById('mute-btn'),
+                backgroundMusic: document.getElementById('bg-music'),
+                settingsBtn: document.querySelector('.settings-btn')
             };
             const gameData = {
                 "Warzone": {
@@ -408,7 +503,34 @@ const char index_html[] PROGMEM = R"raw(
             };
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const clickSound = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
-            const notificationSound = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+
+            // --- Settings Logic ---
+            const settings = {
+                theme: 'neon',
+                accentColor: '#f0f',
+                fontSize: 'medium',
+                animBg: true
+            };
+
+            function applySettings() {
+                document.body.className = `theme-${settings.theme} font-size-${settings.fontSize}`;
+                document.body.style.setProperty('--neon-glow', settings.accentColor);
+                document.querySelector('body::before').style.display = settings.animBg ? 'block' : 'none';
+                document.querySelector('body::after').style.display = settings.animBg ? 'block' : 'none';
+            }
+
+            function saveSettings() {
+                localStorage.setItem('vendme_settings', JSON.stringify(settings));
+            }
+
+            function loadSettings() {
+                const saved = localStorage.getItem('vendme_settings');
+                if (saved) {
+                    Object.assign(settings, JSON.parse(saved));
+                }
+                applySettings();
+            }
+
 
             // --- Core App Logic & Navigation ---
             function showPage(pageId) {
@@ -428,7 +550,6 @@ const char index_html[] PROGMEM = R"raw(
             }
 
             function showAlert(message, type = 'success') {
-                playSound(notificationSound);
                 const alert = document.createElement('div');
                 alert.className = `alert ${type}`;
                 alert.textContent = message;
@@ -489,6 +610,23 @@ const char index_html[] PROGMEM = R"raw(
                 const title = document.createElement('h2');
                 title.textContent = `${gameName} Cheats`;
 
+                const controls_html = `
+                    <div class="cheat-controls">
+                        <input type="search" placeholder="Search cheats..." class="search-bar">
+                        <button class="control-btn" data-action="enable-all">Enable All</button>
+                        <button class="control-btn" data-action="disable-all">Disable All</button>
+                        <button class="control-btn" data-action="reset-sliders">Reset Sliders</button>
+                    </div>
+                    <div class="config-manager">
+                        <select class="config-select"></select>
+                        <button class="control-btn" data-action="load-config">Load</button>
+                        <input type="text" placeholder="config name..." class="config-name-input">
+                        <button class="control-btn" data-action="save-config">Save</button>
+                        <button class="control-btn" data-action="delete-config">Delete</button>
+                    </div>
+                `;
+                elements.cheatArea.innerHTML += controls_html;
+
                 const tabsContainer = document.createElement('div');
                 tabsContainer.className = 'cheat-tabs';
 
@@ -541,6 +679,88 @@ const char index_html[] PROGMEM = R"raw(
                 elements.cheatArea.appendChild(tabsContainer);
                 elements.cheatArea.appendChild(togglesContent);
                 elements.cheatArea.appendChild(slidersContent);
+
+                // --- Event Listeners for new controls ---
+                const searchBar = elements.cheatArea.querySelector('.search-bar');
+                searchBar.addEventListener('input', (e) => {
+                    const searchTerm = e.target.value.toLowerCase();
+                    elements.cheatArea.querySelectorAll('.cheat-item').forEach(item => {
+                        item.style.display = item.textContent.toLowerCase().includes(searchTerm) ? '' : 'none';
+                    });
+                });
+
+                elements.cheatArea.querySelector('[data-action="enable-all"]').addEventListener('click', () => {
+                    togglesContent.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = true);
+                });
+                elements.cheatArea.querySelector('[data-action="disable-all"]').addEventListener('click', () => {
+                    togglesContent.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
+                });
+                elements.cheatArea.querySelector('[data-action="reset-sliders"]').addEventListener('click', () => {
+                    slidersContent.querySelectorAll('input[type="range"]').forEach(s => s.value = s.min);
+                });
+
+                // --- Config Manager Listeners ---
+                populateConfigSelect(gameName);
+
+                elements.cheatArea.querySelector('[data-action="save-config"]').addEventListener('click', () => {
+                    const name = elements.cheatArea.querySelector('.config-name-input').value;
+                    if (!name) { showAlert("Please enter a name for the config.", "error"); return; }
+                    const configs = getConfigs(gameName);
+                    configs[name] = {
+                        toggles: Array.from(togglesContent.querySelectorAll('input:checked')).map(i => i.parentElement.previousElementSibling.textContent),
+                        sliders: Array.from(slidersContent.querySelectorAll('input[type="range"]')).map(s => ({ name: s.parentElement.previousElementSibling.textContent, value: s.value }))
+                    };
+                    saveConfigs(gameName, configs);
+                    populateConfigSelect(gameName);
+                    showAlert(`Config '${name}' saved.`, "success");
+                });
+
+                elements.cheatArea.querySelector('[data-action="load-config"]').addEventListener('click', () => {
+                    const name = elements.cheatArea.querySelector('.config-select').value;
+                    if (!name) { showAlert("Please select a config to load.", "error"); return; }
+                    const configs = getConfigs(gameName);
+                    const config = configs[name];
+                    if (config) {
+                        togglesContent.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = config.toggles.includes(c.parentElement.previousElementSibling.textContent));
+                        config.sliders.forEach(s => {
+                            const slider = Array.from(slidersContent.querySelectorAll('input[type="range"]')).find(el => el.parentElement.previousElementSibling.textContent === s.name);
+                            if (slider) slider.value = s.value;
+                        });
+                        showAlert(`Config '${name}' loaded.`, "success");
+                    }
+                });
+
+                elements.cheatArea.querySelector('[data-action="delete-config"]').addEventListener('click', () => {
+                    const name = elements.cheatArea.querySelector('.config-select').value;
+                    if (!name) { showAlert("Please select a config to delete.", "error"); return; }
+                    if (confirm(`Are you sure you want to delete the config '${name}'?`)) {
+                        const configs = getConfigs(gameName);
+                        delete configs[name];
+                        saveConfigs(gameName, configs);
+                        populateConfigSelect(gameName);
+                        showAlert(`Config '${name}' deleted.`, "success");
+                    }
+                });
+            }
+
+            function getConfigs(gameName) {
+                return JSON.parse(localStorage.getItem(`vendme_configs_${gameName}`) || '{}');
+            }
+
+            function saveConfigs(gameName, configs) {
+                localStorage.setItem(`vendme_configs_${gameName}`, JSON.stringify(configs));
+            }
+
+            function populateConfigSelect(gameName) {
+                const configs = getConfigs(gameName);
+                const select = elements.cheatArea.querySelector('.config-select');
+                select.innerHTML = '<option value="">Select Config...</option>';
+                for (const name in configs) {
+                    const option = document.createElement('option');
+                    option.value = name;
+                    option.textContent = name;
+                    select.appendChild(option);
+                }
             }
 
             function createCheatItem(cheat) {
@@ -589,9 +809,6 @@ const char index_html[] PROGMEM = R"raw(
                 return itemDiv;
             }
 
-            // DEVELOPER NOTE: The original base64 audio data below was corrupted and incomplete.
-            // To make background music work, replace the entire 'data:audio/mpeg;base64,....' string
-            // with a valid base64-encoded MP3 file. The audio will loop automatically.
             const phonkTrack = 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjQ1LjEwMAAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/24DEAAAAAAAAAAAAAAAAAAAAAAAAPRr2agaGnG5tS0Fz5i3pGk2/p5s3/gYpB8A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4//uA8A=';
 
             function startMusic() {
@@ -615,28 +832,13 @@ const char index_html[] PROGMEM = R"raw(
                 playSound(clickSound);
                 currentUser = elements.usernameInput.value || 'User';
                 elements.userNameEl.textContent = currentUser;
-                showPage('enter');
-            });
 
-            elements.enterButton.addEventListener('click', () => {
-                console.log("Enter button clicked.");
-                try {
-                    // This is the true start of the app, and the key to fixing mobile audio
-                    console.log("Attempting to resume AudioContext...");
-                    audioContext.resume().then(() => {
-                        console.log("AudioContext resumed successfully.");
-                        playSound(clickSound);
-                        console.log("Building main menu...");
-                        buildMainMenu();
-                        console.log("Showing menu page...");
-                        showPage('menu');
-                        console.log("Starting music...");
-                        startMusic();
-                        console.log("Enter button tasks complete.");
-                    }).catch(e => console.error("Error resuming AudioContext:", e));
-                } catch (e) {
-                    console.error("Critical error in enterButton listener:", e);
-                }
+                // This is the true start of the app, and the key to fixing mobile audio
+                audioContext.resume().then(() => {
+                    buildMainMenu();
+                    showPage('menu');
+                    startMusic();
+                });
             });
 
             elements.backToMenuButton.addEventListener('click', () => {
@@ -646,11 +848,22 @@ const char index_html[] PROGMEM = R"raw(
             });
 
             elements.logoutButton.addEventListener('click', () => {
-                playSound(clickSound);
+                playSound(deactivateSound);
                 // Don't just show page, also stop music
                 elements.backgroundMusic.pause();
                 elements.backgroundMusic.currentTime = 0;
                 showPage('login');
+            });
+
+            elements.muteButton.addEventListener('click', () => {
+                playSound(clickSound);
+                elements.backgroundMusic.muted = !elements.backgroundMusic.muted;
+                elements.muteButton.textContent = elements.backgroundMusic.muted ? '🔇' : '🔊';
+            });
+
+            elements.settingsBtn.addEventListener('click', () => {
+                playSound(clickSound);
+                modals.settings.classList.remove('hidden');
             });
 
             document.querySelectorAll('.close-button').forEach(button => {
@@ -663,6 +876,49 @@ const char index_html[] PROGMEM = R"raw(
                 });
             });
 
+            // Panic Key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    const appVisible = !pages.app.classList.contains('hidden');
+                    if (appVisible) {
+                        pages.app.classList.toggle('hidden');
+                        elements.backgroundMusic.muted = !elements.backgroundMusic.muted;
+                    }
+                }
+            });
+
+            // --- Settings Listeners ---
+            document.getElementById('theme-select').addEventListener('change', (e) => {
+                settings.theme = e.target.value;
+                applySettings();
+                saveSettings();
+            });
+            document.getElementById('accent-color-picker').addEventListener('input', (e) => {
+                settings.accentColor = e.target.value;
+                applySettings();
+                saveSettings();
+            });
+            document.querySelectorAll('[data-font-size]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    settings.fontSize = e.target.dataset.fontSize;
+                    applySettings();
+                    saveSettings();
+                });
+            });
+            document.getElementById('anim-bg-toggle').addEventListener('change', (e) => {
+                settings.animBg = e.target.checked;
+                applySettings();
+                saveSettings();
+            });
+            document.getElementById('reset-settings-btn').addEventListener('click', () => {
+                if (confirm("Are you sure you want to reset all settings to default?")) {
+                    localStorage.removeItem('vendme_settings');
+                    window.location.reload();
+                }
+            });
+
+            // Initial Load
+            loadSettings();
             showPage('login'); // Set the initial page
         });
     </script>
