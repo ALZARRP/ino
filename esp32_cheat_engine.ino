@@ -890,18 +890,18 @@ const char index_html[] PROGMEM = R"raw(
                     loginContainer.style.display = 'none';
                     appContainer.style.display = 'flex';
 
-                    // Now initialize features. If any of this fails, the user is still on the main page.
-                    loadGames();
-                    if (Object.keys(games).length > 0) {
-                        const firstGame = Object.keys(games)[0];
-                        loadCheatsForGame(firstGame);
-                        const firstGameButton = gameList.querySelector('.game-button');
-                        if(firstGameButton) firstGameButton.classList.add('active');
-                    }
-                userNameEl.textContent = currentUser;
-                    startHardwareStats();
-                    populateNewsTicker();
-                    makeDraggable(aboutWindow);
+                    // --- DEBUGGING: All feature initializations are temporarily disabled. ---
+                    // loadGames();
+                    // if (Object.keys(games).length > 0) {
+                    //     const firstGame = Object.keys(games)[0];
+                    //     loadCheatsForGame(firstGame);
+                    //     const firstGameButton = gameList.querySelector('.game-button');
+                    //     if(firstGameButton) firstGameButton.classList.add('active');
+                    // }
+                    // userNameEl.textContent = currentUser;
+                    // startHardwareStats();
+                    // populateNewsTicker();
+                    // makeDraggable(aboutWindow);
                 } catch (e) {
                     console.error("Error initializing app:", e);
                     showAlert("Fatal Error: Could not initialize app.", "error");
