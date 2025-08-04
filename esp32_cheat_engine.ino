@@ -68,7 +68,7 @@ const char index_html[] PROGMEM = R"raw(
     <link rel="apple-touch-icon" href="https://i.imgur.com/Am42M3S.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
     <style>
         :root {
             --neon-glow: #f0f; /* Hot Pink/Magenta */
@@ -79,21 +79,38 @@ const char index_html[] PROGMEM = R"raw(
             --text-color: #e0e0e0;
             --success-color: #0f0; /* Bright Green */
             --error-color: #f00; /* Bright Red */
-            --font-family: 'Press Start 2P', cursive;
+            --font-family: 'VT323', monospace;
         }
 
-        @keyframes grid-pan {
-            0% { background-position: 0% 0%; }
-            100% { background-position: 100% 100%; }
+        @keyframes move-boxes-1 {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-100vh); }
+        }
+        @keyframes move-boxes-2 {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(100vh); }
+        }
+
+        body::before, body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        body::before {
+            background-image: radial-gradient(ellipse 50px 50px at 20% 20%, rgba(255,0,255,0.2) 0%, transparent 100%);
+            animation: move-boxes-1 20s linear infinite;
+        }
+        body::after {
+            background-image: radial-gradient(ellipse 50px 50px at 80% 80%, rgba(255, 165, 0, 0.2) 0%, transparent 100%);
+            animation: move-boxes-2 20s linear infinite;
         }
 
         body {
             background-color: var(--background-color);
-            background-image:
-                linear-gradient(rgba(142, 45, 226, 0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(142, 45, 226, 0.1) 1px, transparent 1px);
-            background-size: 40px 40px;
-            animation: grid-pan 45s linear infinite;
             color: var(--text-color);
             font-family: var(--font-family);
             margin: 0; padding: 0; overflow: hidden;
@@ -137,16 +154,17 @@ const char index_html[] PROGMEM = R"raw(
         }
 
         /* --- Main Menu Page --- */
+        #menu-page, #app-page { padding-top: 80px; box-sizing: border-box; }
         #menu-page h2 { font-size: 32px; color: var(--neon-glow); text-shadow: 0 0 10px var(--neon-glow); margin-bottom: 40px; }
-        #menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; padding: 20px; }
+        #menu-grid { display: flex; flex-direction: column; gap: 20px; width: 80vw; max-width: 600px; }
         .menu-card {
             background-color: var(--container-bg);
             border: 1px solid var(--border-color);
             border-radius: 15px;
-            padding: 40px 20px;
+            padding: 25px;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-size: 14px; /* Adjusted for new font */
+            font-size: 18px;
             text-align: center;
             text-shadow: 0 0 5px var(--neon-secondary);
         }
@@ -159,9 +177,8 @@ const char index_html[] PROGMEM = R"raw(
 
         /* --- App Page --- */
         #app-page { justify-content: flex-start; }
-        #app-header { width: 100%; background-color: var(--container-bg); padding: 10px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.3); box-sizing: border-box; }
+        #app-header { width: 100%; background-color: var(--container-bg); padding: 10px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.3); box-sizing: border-box; position: fixed; top: 0; left: 0; z-index: 400; }
         #app-header h1 { color: var(--neon-glow); font-size: 24px; margin: 0; text-shadow: 0 0 5px var(--neon-glow); }
-        #back-to-menu { background: #2a2a2a; border: 1px solid #444; color: var(--text-color); padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: all .2s; }
         #app-main { display: flex; width: 100%; flex-grow: 1; overflow: hidden; }
         #game-nav { width: 200px; background-color: var(--container-bg); border-right: 1px solid var(--border-color); flex-shrink: 0; display: flex; flex-direction: column; }
         #user-profile { padding: 20px; text-align: center; border-bottom: 1px solid var(--border-color); }
@@ -187,10 +204,21 @@ const char index_html[] PROGMEM = R"raw(
             .menu-card { padding: 30px 15px; font-size: 18px; }
         }
 
-        .cheat-category { background-color: var(--container-bg); border: 1px solid var(--border-color); border-radius: 15px; padding: 20px; margin-bottom: 25px; }
-        .cheat-category h3 { margin-top: 0; color: var(--neon-glow); }
-        .cheat-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #2a2a2a; }
-        .cheat-item:last-child { border-bottom: none; }
+        .cheat-category { margin-bottom: 25px; }
+        .cheat-category h3 { margin-top: 0; color: var(--neon-glow); margin-bottom: 15px; }
+        .cheat-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px;
+            background-color: var(--container-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            transition: all .2s ease;
+        }
+        .cheat-item:hover {
+            box-shadow: 0 0 15px var(--neon-glow);
+            border-color: var(--neon-glow);
+        }
         .toggle-switch { position: relative; display: inline-block; width: 50px; height: 28px; }
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
         .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 28px; }
@@ -221,6 +249,10 @@ const char index_html[] PROGMEM = R"raw(
             <input type="password" class="login-input" placeholder="Password" autocomplete="off">
             <button id="login-button" class="login-button">Authenticate</button>
         </div>
+    </div>
+
+    <div id="enter-page" class="page hidden">
+        <button id="enter-button" class="login-button" style="width: auto; padding: 20px 40px; font-size: 24px;">Click to Enter</button>
     </div>
 
     <div id="menu-page" class="page hidden">
@@ -267,6 +299,7 @@ const char index_html[] PROGMEM = R"raw(
             let currentUser = 'User';
             const pages = {
                 login: document.getElementById('login-page'),
+                enter: document.getElementById('enter-page'),
                 menu: document.getElementById('menu-page'),
                 app: document.getElementById('app-page')
             };
@@ -276,6 +309,7 @@ const char index_html[] PROGMEM = R"raw(
             const elements = {
                 usernameInput: document.getElementById('username-input'),
                 loginButton: document.getElementById('login-button'),
+                enterButton: document.getElementById('enter-button'),
                 menuGrid: document.getElementById('menu-grid'),
                 appMain: document.getElementById('app-main'),
                 cheatArea: document.getElementById('cheat-area'),
@@ -564,6 +598,12 @@ const char index_html[] PROGMEM = R"raw(
                 playSound(clickSound);
                 currentUser = elements.usernameInput.value || 'User';
                 elements.userNameEl.textContent = currentUser;
+                showPage('enter');
+            });
+
+            elements.enterButton.addEventListener('click', () => {
+                // This is the true start of the app
+                playSound(clickSound);
                 buildMainMenu();
                 showPage('menu');
                 startMusic();
