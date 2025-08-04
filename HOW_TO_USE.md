@@ -60,7 +60,7 @@ Before you can upload the code, you need to configure your Arduino IDE to work w
 
 4.  **Log In and Use:**
     *   You will see the login screen. **You can enter any username and password** and click "Authenticate".
-    *   You will then be taken to the main cheat engine interface where you can interact with all the menus and features.
+    *   You will then be taken to the main menu page. From there you can navigate to the cheat pages for each game.
 
 ## For iOS Users (App-like Experience)
 
