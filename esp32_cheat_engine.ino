@@ -633,6 +633,50 @@ const char index_html[] PROGMEM = R"raw(
             color: var(--success-color);
         }
 
+        #main-menu-page {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        #main-menu-page h2 {
+            font-size: 32px;
+            color: var(--neon-glow);
+            text-shadow: 0 0 10px var(--neon-glow);
+            margin-bottom: 40px;
+        }
+        #menu-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            padding: 20px;
+        }
+        .menu-card {
+            background-color: var(--container-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            padding: 40px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .menu-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--neon-glow);
+            color: var(--neon-glow);
+            box-shadow: 0 5px 20px rgba(0, 255, 222, 0.1);
+        }
+
+        #back-to-menu {
+            position: absolute;
+            left: 20px;
+            top: 18px;
+        }
+
         .hidden {
             display: none !important;
         }
@@ -649,8 +693,16 @@ const char index_html[] PROGMEM = R"raw(
         </div>
     </div>
 
+    <div id="main-menu-page" class="hidden">
+        <h2>Main Menu</h2>
+        <div id="menu-grid">
+            <!-- Menu items will be injected by JS -->
+        </div>
+    </div>
+
     <div id="app-container" class="hidden">
         <header>
+            <button id="back-to-menu" class="config-btn">&larr; Menu</button>
             <h1>VEND.ME</h1>
             <div class="header-controls">
                 <div id="config-buttons">
@@ -845,123 +897,148 @@ const char index_html[] PROGMEM = R"raw(
 
         // --- UI LOGIC ---
         document.addEventListener('DOMContentLoaded', () => {
-            // --- Element Selectors ---
-            const loginButton = document.getElementById('login-button');
-            const loginContainer = document.getElementById('login-container');
-            const appContainer = document.getElementById('app-container');
-            const usernameInput = document.getElementById('username');
-            const gameList = document.getElementById('game-list');
-            const cheatContent = document.getElementById('cheat-content');
-            const panicButton = document.getElementById('panic-button');
-            const themeSwitcher = document.getElementById('theme-switcher');
-            const configButtons = document.querySelectorAll('.config-btn');
-            const aboutButton = document.getElementById('about-button');
-            const aboutWindow = document.getElementById('about-window');
-            const closeAbout = aboutWindow.querySelector('.close-btn');
-            const statusButton = document.getElementById('status-button');
-            const statusWindow = document.getElementById('system-status-window');
-            const closeStatusButton = document.getElementById('close-status-button');
-            const newsTicker = document.getElementById('news-ticker');
-            const cpuLoadEl = document.getElementById('cpu-load');
-            const ramUsageEl = document.getElementById('ram-usage');
-            const userNameEl = document.getElementById('user-name');
-
-            // --- App State ---
+            // --- App State & Selectors ---
             let currentUser = 'User';
             const newsItems = [
                 'New profiles for BO6 added.', 'Kernel-level injection stability improved.', 'Security module updated.', 'Fortnite ESP rendering optimized.', 'Stealth mode now fully undetectable.'
             ];
 
-            // --- Core Functions ---
-            function showAlert(message, type = 'success') {
-                const alert = document.createElement('div');
-                alert.className = `alert ${type}`;
-                alert.textContent = message;
-                document.body.appendChild(alert);
+            const pages = {
+                login: document.getElementById('login-container'),
+                menu: document.getElementById('main-menu-page'),
+                app: document.getElementById('app-container')
+            };
 
-                setTimeout(() => alert.classList.add('show'), 10);
-                setTimeout(() => {
-                    alert.classList.remove('show');
-                    setTimeout(() => document.body.removeChild(alert), 500);
-                }, 3000);
+            const modals = {
+                about: document.getElementById('about-window'),
+                status: document.getElementById('system-status-window')
+            };
+
+            const elements = {
+                usernameInput: document.getElementById('username'),
+                loginButton: document.getElementById('login-button'),
+                menuGrid: document.getElementById('menu-grid'),
+                cheatContent: document.getElementById('cheat-content'),
+                gameList: document.getElementById('game-list'),
+                userNameEl: document.getElementById('user-name'),
+                backToMenuButton: document.getElementById('back-to-menu'),
+                cpuLoadEl: document.getElementById('cpu-load'),
+                ramUsageEl: document.getElementById('ram-usage'),
+                newsTicker: document.getElementById('news-ticker'),
+                panicButton: document.getElementById('panic-button'),
+                themeSwitcher: document.getElementById('theme-switcher'),
+                configButtons: document.querySelectorAll('.config-btn'),
+                aboutButton: document.getElementById('about-button'),
+                statusButton: document.getElementById('status-button'),
+                closeAboutButton: modals.about.querySelector('.close-btn'),
+                closeStatusButton: document.getElementById('close-status-button')
+            };
+
+            // --- Core App Logic ---
+            function showPage(pageId) {
+                Object.values(pages).forEach(page => page.classList.add('hidden'));
+                if (pages[pageId]) {
+                    pages[pageId].classList.remove('hidden');
+                }
             }
 
             function initApp() {
                 try {
-                    loginContainer.classList.add('hidden');
-                    appContainer.classList.remove('hidden');
-
-                    // Now initialize features. If any of this fails, the user is still on the main page.
-                    loadGames();
-                    if (Object.keys(games).length > 0) {
-                        const firstGame = Object.keys(games)[0];
-                        loadCheatsForGame(firstGame);
-                        const firstGameButton = gameList.querySelector('.game-button');
-                        if(firstGameButton) firstGameButton.classList.add('active');
-                    }
-                    userNameEl.textContent = currentUser;
+                    elements.userNameEl.textContent = currentUser;
+                    buildMainMenu();
                     startHardwareStats();
                     populateNewsTicker();
-                    makeDraggable(aboutWindow);
+                    makeDraggable(modals.about);
+                    showPage('menu');
                 } catch (e) {
                     console.error("Error initializing app:", e);
                     showAlert("Fatal Error: Could not initialize app.", "error");
-                    loginContainer.classList.remove('hidden');
-                    appContainer.classList.add('hidden');
+                    showPage('login');
                 }
             }
 
-            // --- Initial State ---
-            aboutWindow.classList.add('hidden');
-            statusWindow.classList.add('hidden');
+            function buildMainMenu() {
+                elements.menuGrid.innerHTML = '';
+                // Add game cards
+                for (const gameName in games) {
+                    const card = document.createElement('div');
+                    card.className = 'menu-card';
+                    card.textContent = gameName;
+                    card.dataset.game = gameName;
+                    card.addEventListener('click', () => {
+                        playSound(clickSound);
+                        loadGameUI(gameName);
+                        showPage('app');
+                    });
+                    elements.menuGrid.appendChild(card);
+                }
+                // Add other cards
+                const statusCard = document.createElement('div');
+                statusCard.className = 'menu-card';
+                statusCard.textContent = 'System Status';
+                statusCard.addEventListener('click', () => {
+                    playSound(clickSound);
+                    modals.status.classList.remove('hidden');
+                });
+                elements.menuGrid.appendChild(statusCard);
+            }
+
+            function loadGameUI(gameName) {
+                // This function now just loads the content, navigation is separate
+                loadGamesList(gameName); // Build the side nav
+                loadCheatsForGame(gameName); // Build the cheat content
+            }
 
             // --- Event Listeners ---
-            loginButton.addEventListener('click', () => {
+            elements.loginButton.addEventListener('click', () => {
                 playSound(clickSound);
-                currentUser = usernameInput.value || 'User'; // Capture username
+                currentUser = elements.usernameInput.value || 'User';
                 initApp();
             });
 
-            // Populate game navigation
-            function loadGames() {
-                gameList.innerHTML = '';
+            elements.backToMenuButton.addEventListener('click', () => {
+                playSound(deactivateSound);
+                showPage('menu');
+            });
+
+            // --- (Existing functions like loadGames, loadCheatsForGame, showAlert, etc. go here) ---
+            // Populate game navigation sidebar
+            function loadGamesList(activeGame) {
+                elements.gameList.innerHTML = '';
                 for (const gameName in games) {
                     const button = document.createElement('button');
                     button.className = 'game-button';
                     button.textContent = gameName;
-                    button.dataset.game = gameName;
+                    if (gameName === activeGame) {
+                        button.classList.add('active');
+                    }
                     button.addEventListener('click', (e) => {
                         playSound(clickSound);
-                        document.querySelectorAll('#game-list .game-button').forEach(btn => btn.classList.remove('active'));
-                        e.target.classList.add('active');
-                        loadCheatsForGame(gameName);
+                        loadGameUI(gameName); // Reload the whole UI for the new game
                     });
-                    gameList.appendChild(button);
+                    elements.gameList.appendChild(button);
                 }
             }
 
             // Load cheats for a selected game
             function loadCheatsForGame(gameName) {
-                cheatContent.innerHTML = '';
+                elements.cheatContent.innerHTML = '';
                 const gameData = games[gameName];
                 const title = document.createElement('h2');
                 title.textContent = `${gameName} Cheats`;
-                cheatContent.appendChild(title);
-
+                elements.cheatContent.appendChild(title);
                 for (const category in gameData) {
                     const categoryDiv = document.createElement('div');
                     categoryDiv.className = 'cheat-category';
                     const categoryTitle = document.createElement('h3');
                     categoryTitle.textContent = category;
                     categoryDiv.appendChild(categoryTitle);
-
                     gameData[category].forEach(cheat => {
                         const itemDiv = document.createElement('div');
                         itemDiv.className = 'cheat-item';
                         const label = document.createElement('label');
                         label.textContent = cheat.name;
                         itemDiv.appendChild(label);
-
                         if (cheat.type === 'toggle') {
                             const switchLabel = document.createElement('label');
                             switchLabel.className = 'toggle-switch';
@@ -1001,16 +1078,28 @@ const char index_html[] PROGMEM = R"raw(
                         }
                         categoryDiv.appendChild(itemDiv);
                     });
-                    cheatContent.appendChild(categoryDiv);
+                    elements.cheatContent.appendChild(categoryDiv);
                 }
             }
 
-            panicButton.addEventListener('click', () => {
+            function showAlert(message, type = 'success') {
+                const alert = document.createElement('div');
+                alert.className = `alert ${type}`;
+                alert.textContent = message;
+                document.body.appendChild(alert);
+                setTimeout(() => alert.classList.add('show'), 10);
+                setTimeout(() => {
+                    alert.classList.remove('show');
+                    setTimeout(() => document.body.removeChild(alert), 500);
+                }, 3000);
+            }
+
+            elements.panicButton.addEventListener('click', () => {
                 playSound(deactivateSound);
                 document.body.innerHTML = '<div style="width:100vw;height:100vh;display:flex;justify-content:center;align-items:center;color:white;font-size:24px;font-family:sans-serif;">Connection Lost...</div>';
             });
 
-            themeSwitcher.addEventListener('click', (e) => {
+            elements.themeSwitcher.addEventListener('click', (e) => {
                 if (e.target.classList.contains('theme-dot')) {
                     const color = e.target.dataset.color;
                     document.documentElement.style.setProperty('--neon-glow', color);
@@ -1020,31 +1109,26 @@ const char index_html[] PROGMEM = R"raw(
                 }
             });
 
-            configButtons.forEach(btn => {
+            elements.configButtons.forEach(btn => {
                 btn.addEventListener('click', () => {
                     playSound(clickSound);
                     showAlert(`${btn.textContent} successful!`, 'success');
                 });
             });
 
-            aboutButton.addEventListener('click', () => {
+            elements.aboutButton.addEventListener('click', () => {
                 playSound(clickSound);
-                aboutWindow.classList.remove('hidden');
+                modals.about.classList.remove('hidden');
             });
 
-            closeAbout.addEventListener('click', () => {
+            elements.closeAboutButton.addEventListener('click', () => {
                 playSound(clickSound);
-                aboutWindow.classList.add('hidden');
+                modals.about.classList.add('hidden');
             });
 
-            statusButton.addEventListener('click', () => {
-                playSound(clickSound);
-                statusWindow.classList.remove('hidden');
-            });
-
-            closeStatusButton.addEventListener('click', () => {
+            elements.closeStatusButton.addEventListener('click', () => {
                 playSound(deactivateSound);
-                statusWindow.classList.add('hidden');
+                modals.status.classList.add('hidden');
             });
 
             function makeDraggable(elmnt) {
@@ -1055,7 +1139,6 @@ const char index_html[] PROGMEM = R"raw(
                 } else {
                     elmnt.onmousedown = dragMouseDown;
                 }
-
                 function dragMouseDown(e) {
                     e = e || window.event;
                     e.preventDefault();
@@ -1064,7 +1147,6 @@ const char index_html[] PROGMEM = R"raw(
                     document.onmouseup = closeDragElement;
                     document.onmousemove = elementDrag;
                 }
-
                 function elementDrag(e) {
                     e = e || window.event;
                     e.preventDefault();
@@ -1075,7 +1157,6 @@ const char index_html[] PROGMEM = R"raw(
                     elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
                     elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
                 }
-
                 function closeDragElement() {
                     document.onmouseup = null;
                     document.onmousemove = null;
@@ -1084,8 +1165,8 @@ const char index_html[] PROGMEM = R"raw(
 
             function startHardwareStats() {
                 setInterval(() => {
-                    cpuLoadEl.textContent = (Math.random() * (90 - 50) + 50).toFixed(2);
-                    ramUsageEl.textContent = (Math.random() * (75 - 40) + 40).toFixed(2);
+                    elements.cpuLoadEl.textContent = (Math.random() * (90 - 50) + 50).toFixed(2);
+                    elements.ramUsageEl.textContent = (Math.random() * (75 - 40) + 40).toFixed(2);
                 }, 1500);
             }
 
@@ -1094,9 +1175,12 @@ const char index_html[] PROGMEM = R"raw(
                 for (let i = 0; i < 5; i++) {
                     fullText += newsItems.join(' +++ ') + ' +++ ';
                 }
-                newsTicker.textContent = fullText;
+                elements.newsTicker.textContent = fullText;
             }
 
+            // --- Initial State ---
+            Object.values(modals).forEach(modal => modal.classList.add('hidden'));
+            showPage('login');
             window.addEventListener('contextmenu', e => e.preventDefault());
         });
     </script>
