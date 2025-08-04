@@ -512,7 +512,6 @@ const char index_html[] PROGMEM = R"raw(
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             z-index: 2000;
-            display: none; /* Hidden by default */
         }
         .draggable-header {
             padding: 10px 15px;
@@ -586,7 +585,6 @@ const char index_html[] PROGMEM = R"raw(
             background-color: rgba(13, 13, 13, 0.95);
             backdrop-filter: blur(10px);
             z-index: 3000;
-            display: none; /* Hidden by default */
             flex-direction: column;
             align-items: center;
             justify-content: center;
@@ -634,6 +632,10 @@ const char index_html[] PROGMEM = R"raw(
         .status-ok {
             color: var(--success-color);
         }
+
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -647,7 +649,7 @@ const char index_html[] PROGMEM = R"raw(
         </div>
     </div>
 
-    <div id="app-container">
+    <div id="app-container" class="hidden">
         <header>
             <h1>VEND.ME</h1>
             <div class="header-controls">
@@ -886,36 +888,37 @@ const char index_html[] PROGMEM = R"raw(
 
             function initApp() {
                 try {
-                    // This is the critical part, do the UI switch first.
-                    loginContainer.style.display = 'none';
-                    appContainer.style.display = 'flex';
+                    loginContainer.classList.add('hidden');
+                    appContainer.classList.remove('hidden');
 
-                    // --- DEBUGGING: All feature initializations are temporarily disabled. ---
-                    // loadGames();
-                    // if (Object.keys(games).length > 0) {
-                    //     const firstGame = Object.keys(games)[0];
-                    //     loadCheatsForGame(firstGame);
-                    //     const firstGameButton = gameList.querySelector('.game-button');
-                    //     if(firstGameButton) firstGameButton.classList.add('active');
-                    // }
-                    // userNameEl.textContent = currentUser;
-                    // startHardwareStats();
-                    // populateNewsTicker();
-                    // makeDraggable(aboutWindow);
+                    // Now initialize features. If any of this fails, the user is still on the main page.
+                    loadGames();
+                    if (Object.keys(games).length > 0) {
+                        const firstGame = Object.keys(games)[0];
+                        loadCheatsForGame(firstGame);
+                        const firstGameButton = gameList.querySelector('.game-button');
+                        if(firstGameButton) firstGameButton.classList.add('active');
+                    }
+                    userNameEl.textContent = currentUser;
+                    startHardwareStats();
+                    populateNewsTicker();
+                    makeDraggable(aboutWindow);
                 } catch (e) {
                     console.error("Error initializing app:", e);
                     showAlert("Fatal Error: Could not initialize app.", "error");
-                    // If something breaks, send them back to the login screen.
-                    loginContainer.style.display = 'flex';
-                    appContainer.style.display = 'none';
+                    loginContainer.classList.remove('hidden');
+                    appContainer.classList.add('hidden');
                 }
             }
+
+            // --- Initial State ---
+            aboutWindow.classList.add('hidden');
+            statusWindow.classList.add('hidden');
 
             // --- Event Listeners ---
             loginButton.addEventListener('click', () => {
                 playSound(clickSound);
                 currentUser = usernameInput.value || 'User'; // Capture username
-                // The initApp function now handles the screen transition.
                 initApp();
             });
 
@@ -1026,22 +1029,22 @@ const char index_html[] PROGMEM = R"raw(
 
             aboutButton.addEventListener('click', () => {
                 playSound(clickSound);
-                aboutWindow.style.display = 'block';
+                aboutWindow.classList.remove('hidden');
             });
 
             closeAbout.addEventListener('click', () => {
                 playSound(clickSound);
-                aboutWindow.style.display = 'none';
+                aboutWindow.classList.add('hidden');
             });
 
             statusButton.addEventListener('click', () => {
                 playSound(clickSound);
-                statusWindow.style.display = 'flex';
+                statusWindow.classList.remove('hidden');
             });
 
             closeStatusButton.addEventListener('click', () => {
                 playSound(deactivateSound);
-                statusWindow.style.display = 'none';
+                statusWindow.classList.add('hidden');
             });
 
             function makeDraggable(elmnt) {
