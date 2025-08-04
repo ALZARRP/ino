@@ -68,7 +68,7 @@ const char index_html[] PROGMEM = R"raw(
     <link rel="apple-touch-icon" href="https://i.imgur.com/Am42M3S.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         :root {
             --neon-glow: #f0f; /* Hot Pink/Magenta */
@@ -79,7 +79,7 @@ const char index_html[] PROGMEM = R"raw(
             --text-color: #e0e0e0;
             --success-color: #0f0; /* Bright Green */
             --error-color: #f00; /* Bright Red */
-            --font-family: 'Orbitron', sans-serif;
+            --font-family: 'Press Start 2P', cursive;
         }
 
         @keyframes grid-pan {
@@ -90,14 +90,13 @@ const char index_html[] PROGMEM = R"raw(
         body {
             background-color: var(--background-color);
             background-image:
-                linear-gradient(var(--border-color) 1px, transparent 1px),
-                linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
-            background-size: 50px 50px;
-            animation: grid-pan 30s linear infinite;
+                linear-gradient(rgba(142, 45, 226, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(142, 45, 226, 0.1) 1px, transparent 1px);
+            background-size: 40px 40px;
+            animation: grid-pan 45s linear infinite;
             color: var(--text-color);
             font-family: var(--font-family);
             margin: 0; padding: 0; overflow: hidden;
-            text-shadow: 0 0 2px var(--text-color);
         }
         .page { display: flex; flex-direction: column; width: 100vw; height: 100vh; align-items: center; justify-content: center; }
         .hidden { display: none !important; }
@@ -115,13 +114,48 @@ const char index_html[] PROGMEM = R"raw(
             padding: 8px 12px; border-radius: 8px; cursor: pointer;
             transition: all .2s; font-size: 16px; font-weight: bold;
         }
-        #back-to-menu-btn:hover { border-color: var(--neon-glow); color: var(--neon-glow); }
+        #back-to-menu-btn, #logout-btn {
+            position: fixed;
+            top: 20px;
+            background: rgba(26, 26, 52, 0.8);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all .2s;
+            font-size: 16px;
+            font-weight: bold;
+            font-family: var(--font-family);
+            z-index: 500;
+        }
+        #back-to-menu-btn { left: 20px; }
+        #logout-btn { right: 20px; }
+        #back-to-menu-btn:hover, #logout-btn:hover {
+            box-shadow: 0 0 15px var(--neon-glow);
+            color: var(--neon-glow);
+        }
 
         /* --- Main Menu Page --- */
         #menu-page h2 { font-size: 32px; color: var(--neon-glow); text-shadow: 0 0 10px var(--neon-glow); margin-bottom: 40px; }
         #menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; padding: 20px; }
-        .menu-card { background-color: var(--container-bg); border: 1px solid var(--border-color); border-radius: 15px; padding: 40px 20px; cursor: pointer; transition: all 0.3s ease; font-size: 20px; font-weight: bold; }
-        .menu-card:hover { transform: translateY(-5px); border-color: var(--neon-glow); color: var(--neon-glow); box-shadow: 0 5px 20px rgba(0, 255, 222, 0.1); }
+        .menu-card {
+            background-color: var(--container-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            padding: 40px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px; /* Adjusted for new font */
+            text-align: center;
+            text-shadow: 0 0 5px var(--neon-secondary);
+        }
+        .menu-card:hover {
+            transform: translateY(-5px);
+            color: var(--neon-secondary);
+            border-color: var(--neon-secondary);
+            box-shadow: 0 0 15px var(--neon-glow), 0 0 25px var(--neon-glow), 0 0 45px rgba(255, 0, 255, 0.5);
+        }
 
         /* --- App Page --- */
         #app-page { justify-content: flex-start; }
@@ -196,10 +230,11 @@ const char index_html[] PROGMEM = R"raw(
 
     <div id="app-page" class="page hidden">
         <div id="app-header">
-            <button id="back-to-menu-btn">&larr; Menu</button>
             <h1>VEND.ME</h1>
             <button id="mute-btn">🔊</button>
         </div>
+        <button id="back-to-menu-btn">&larr; Menu</button>
+        <button id="logout-btn">Logout</button>
         <div id="app-main">
             <nav id="game-nav">
                 <div id="user-profile">
@@ -247,6 +282,7 @@ const char index_html[] PROGMEM = R"raw(
                 gameList: document.getElementById('game-list'),
                 userNameEl: document.getElementById('user-name'),
                 backToMenuButton: document.getElementById('back-to-menu-btn'),
+                logoutButton: document.getElementById('logout-btn'),
                 muteButton: document.getElementById('mute-btn'),
                 backgroundMusic: document.getElementById('bg-music')
             };
@@ -507,6 +543,22 @@ const char index_html[] PROGMEM = R"raw(
 
             const phonkTrack = 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjQ1LjEwMAAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/24DEAAAAAAAAAAAAAAAAAAAAAAAAPRr2agaGnG5tS0Fz5i3pGk2/p5s3/gYpB8A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4D+A/gP4//uA8A=';
 
+            function startMusic() {
+                if (elements.backgroundMusic.src === '') {
+                    elements.backgroundMusic.src = phonkTrack;
+                }
+                const promise = elements.backgroundMusic.play();
+                if (promise !== undefined) {
+                    promise.catch(error => {
+                        console.log("Autoplay was prevented. User must interact with the page first.");
+                        // Attempt to play again on the next user interaction
+                        document.body.addEventListener('click', startMusic, { once: true });
+                    }).then(() => {
+                        // Autoplay started!
+                    });
+                }
+            }
+
             // --- Event Listeners & Initial Setup ---
             elements.loginButton.addEventListener('click', () => {
                 playSound(clickSound);
@@ -514,17 +566,21 @@ const char index_html[] PROGMEM = R"raw(
                 elements.userNameEl.textContent = currentUser;
                 buildMainMenu();
                 showPage('menu');
-                // Start music on first interaction
-                if (elements.backgroundMusic.src === '') {
-                    elements.backgroundMusic.src = phonkTrack;
-                }
-                elements.backgroundMusic.play().catch(e => console.log("Autoplay blocked"));
+                startMusic();
             });
 
             elements.backToMenuButton.addEventListener('click', () => {
                 playSound(clickSound);
                 elements.appMain.classList.remove('focus-mode');
                 showPage('menu');
+            });
+
+            elements.logoutButton.addEventListener('click', () => {
+                playSound(deactivateSound);
+                // Don't just show page, also stop music
+                elements.backgroundMusic.pause();
+                elements.backgroundMusic.currentTime = 0;
+                showPage('login');
             });
 
             elements.muteButton.addEventListener('click', () => {
