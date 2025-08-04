@@ -766,13 +766,13 @@ void setup() {
   tft.fillScreen(TFT_BLACK);
 
   tft.setTextColor(TFT_CYAN, TFT_BLACK);
-  tft.setTextDatum(mc_center);
+  tft.setTextDatum(lgfx::v1::textdatum_t::middle_center);
   tft.setFont(&fonts::Orbitron_Light_32);
   tft.drawString("VENDOR.ME", tft.width() / 2, tft.height() / 2 - 20);
 
   tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  tft.setFont(&fonts::Orbitron_Bold_24);
-  tft.drawString("CHEAT ENGINE", tft.width() / 2, tft.height() / 2 + 20);
+  tft.setFont(&fonts::FreeSansBold12pt7b);
+  tft.drawString("CHEAT ENGINE", tft.width() / 2, tft.height() / 2 + 30);
 
   // --- WiFi and Server Initialization ---
   Serial.begin(115200);
