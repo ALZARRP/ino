@@ -553,6 +553,87 @@ const char index_html[] PROGMEM = R"raw(
             0% { transform: translateX(100%); }
             100% { transform: translateX(-100%); }
         }
+
+        #user-profile {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+        #user-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: var(--neon-glow);
+            margin: 0 auto 10px;
+            box-shadow: 0 0 15px var(--neon-glow);
+        }
+        #user-name {
+            margin: 0;
+            color: var(--text-color);
+        }
+        #user-status {
+            margin: 5px 0 0;
+            font-size: 12px;
+            color: var(--success-color);
+        }
+
+        #system-status-window {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(13, 13, 13, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 3000;
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #close-status-button {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 40px;
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+        #system-status-window h2 {
+            color: var(--neon-glow);
+            text-shadow: 0 0 10px var(--neon-glow);
+            font-size: 32px;
+            margin-bottom: 40px;
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            width: 80%;
+        }
+        .status-item {
+            background: var(--container-bg);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+        .status-item h4 {
+            margin: 0 0 10px;
+            color: #aaa;
+        }
+        .status-item p {
+            margin: 0;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .status-ok {
+            color: var(--success-color);
+        }
     </style>
 </head>
 <body>
@@ -586,10 +667,16 @@ const char index_html[] PROGMEM = R"raw(
 
         <main>
             <nav id="game-nav">
+                <div id="user-profile">
+                    <div id="user-avatar"></div>
+                    <h3 id="user-name">User</h3>
+                    <p id="user-status">Status: Online</p>
+                </div>
                 <div id="game-list">
                     <!-- Game buttons will be injected here by JS -->
                 </div>
                 <div id="sidebar-footer">
+                     <button id="status-button" class="game-button">System Status</button>
                     <div id="hw-stats">
                         <p>CPU: <span id="cpu-load">--</span>%</p>
                         <p>RAM: <span id="ram-usage">--</span>%</p>
@@ -620,6 +707,37 @@ const char index_html[] PROGMEM = R"raw(
     <div id="news-ticker-container">
         <div id="news-ticker">
             <!-- News items will be injected by JS -->
+        </div>
+    </div>
+
+    <div id="system-status-window">
+        <button id="close-status-button">&times;</button>
+        <h2>System Status</h2>
+        <div class="status-grid">
+            <div class="status-item">
+                <h4>Injection Status</h4>
+                <p class="status-ok">Kernel-Level</p>
+            </div>
+            <div class="status-item">
+                <h4>VAC/BattlEye</h4>
+                <p class="status-ok">Undetected</p>
+            </div>
+            <div class="status-item">
+                <h4>Connection</h4>
+                <p class="status-ok">Encrypted</p>
+            </div>
+            <div class="status-item">
+                <h4>Last Update</h4>
+                <p>2024-07-21 14:30 UTC</p>
+            </div>
+             <div class="status-item">
+                <h4>Device Temp</h4>
+                <p>42.5 C</p>
+            </div>
+             <div class="status-item">
+                <h4>Uptime</h4>
+                <p>0h 15m 42s</p>
+            </div>
         </div>
     </div>
 
@@ -729,6 +847,7 @@ const char index_html[] PROGMEM = R"raw(
             const loginButton = document.getElementById('login-button');
             const loginContainer = document.getElementById('login-container');
             const appContainer = document.getElementById('app-container');
+            const usernameInput = document.getElementById('username');
             const gameList = document.getElementById('game-list');
             const cheatContent = document.getElementById('cheat-content');
             const panicButton = document.getElementById('panic-button');
@@ -737,11 +856,16 @@ const char index_html[] PROGMEM = R"raw(
             const aboutButton = document.getElementById('about-button');
             const aboutWindow = document.getElementById('about-window');
             const closeAbout = aboutWindow.querySelector('.close-btn');
+            const statusButton = document.getElementById('status-button');
+            const statusWindow = document.getElementById('system-status-window');
+            const closeStatusButton = document.getElementById('close-status-button');
             const newsTicker = document.getElementById('news-ticker');
             const cpuLoadEl = document.getElementById('cpu-load');
             const ramUsageEl = document.getElementById('ram-usage');
+            const userNameEl = document.getElementById('user-name');
 
             // --- App State ---
+            let currentUser = 'User';
             const newsItems = [
                 'New profiles for BO6 added.', 'Kernel-level injection stability improved.', 'Security module updated.', 'Fortnite ESP rendering optimized.', 'Stealth mode now fully undetectable.'
             ];
@@ -760,25 +884,40 @@ const char index_html[] PROGMEM = R"raw(
                 }, 3000);
             }
 
-            // Login
+            function initApp() {
+                try {
+                    // This is the critical part, do the UI switch first.
+                    loginContainer.style.display = 'none';
+                    appContainer.style.display = 'flex';
+
+                    // Now initialize features. If any of this fails, the user is still on the main page.
+                    loadGames();
+                    if (Object.keys(games).length > 0) {
+                        const firstGame = Object.keys(games)[0];
+                        loadCheatsForGame(firstGame);
+                        const firstGameButton = gameList.querySelector('.game-button');
+                        if(firstGameButton) firstGameButton.classList.add('active');
+                    }
+                userNameEl.textContent = currentUser;
+                    startHardwareStats();
+                    populateNewsTicker();
+                    makeDraggable(aboutWindow);
+                } catch (e) {
+                    console.error("Error initializing app:", e);
+                    showAlert("Fatal Error: Could not initialize app.", "error");
+                    // If something breaks, send them back to the login screen.
+                    loginContainer.style.display = 'flex';
+                    appContainer.style.display = 'none';
+                }
+            }
+
+            // --- Event Listeners ---
             loginButton.addEventListener('click', () => {
                 playSound(clickSound);
-                loginContainer.style.display = 'none';
-                appContainer.style.display = 'flex';
+                currentUser = usernameInput.value || 'User'; // Capture username
+                // The initApp function now handles the screen transition.
                 initApp();
             });
-
-            function initApp() {
-                loadGames();
-                // Load first game by default
-                if (Object.keys(games).length > 0) {
-                    const firstGame = Object.keys(games)[0];
-                    loadCheatsForGame(firstGame);
-                    gameList.querySelector('.game-button').classList.add('active');
-                }
-                startHardwareStats();
-                populateNewsTicker();
-            }
 
             // Populate game navigation
             function loadGames() {
@@ -790,7 +929,7 @@ const char index_html[] PROGMEM = R"raw(
                     button.dataset.game = gameName;
                     button.addEventListener('click', (e) => {
                         playSound(clickSound);
-                        document.querySelectorAll('.game-button').forEach(btn => btn.classList.remove('active'));
+                        document.querySelectorAll('#game-list .game-button').forEach(btn => btn.classList.remove('active'));
                         e.target.classList.add('active');
                         loadCheatsForGame(gameName);
                     });
@@ -863,7 +1002,6 @@ const char index_html[] PROGMEM = R"raw(
                 }
             }
 
-            // --- Event Listeners & UI Handlers ---
             panicButton.addEventListener('click', () => {
                 playSound(deactivateSound);
                 document.body.innerHTML = '<div style="width:100vw;height:100vh;display:flex;justify-content:center;align-items:center;color:white;font-size:24px;font-family:sans-serif;">Connection Lost...</div>';
@@ -894,6 +1032,16 @@ const char index_html[] PROGMEM = R"raw(
             closeAbout.addEventListener('click', () => {
                 playSound(clickSound);
                 aboutWindow.style.display = 'none';
+            });
+
+            statusButton.addEventListener('click', () => {
+                playSound(clickSound);
+                statusWindow.style.display = 'flex';
+            });
+
+            closeStatusButton.addEventListener('click', () => {
+                playSound(deactivateSound);
+                statusWindow.style.display = 'none';
             });
 
             function makeDraggable(elmnt) {
@@ -930,7 +1078,6 @@ const char index_html[] PROGMEM = R"raw(
                     document.onmousemove = null;
                 }
             }
-            makeDraggable(aboutWindow);
 
             function startHardwareStats() {
                 setInterval(() => {
