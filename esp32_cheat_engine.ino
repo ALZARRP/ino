@@ -104,8 +104,22 @@ const char index_html[] PROGMEM = R"raw(
         .game-button { display: block; width: 100%; padding: 15px 20px; background: none; border: none; color: var(--text-color); text-align: left; font-size: 16px; cursor: pointer; border-left: 3px solid transparent; transition: all 0.3s ease; }
         .game-button:hover { background-color: #252525; color: var(--neon-glow); }
         .game-button.active { border-left-color: var(--neon-glow); color: var(--neon-glow); }
-        #cheat-area { flex-grow: 1; padding: 30px; overflow-y: auto; }
-        #cheat-area h2 { margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+        #app-main.focus-mode #game-nav { display: none; }
+        #cheat-area { flex-grow: 1; padding: 30px; display: flex; flex-direction: column; }
+        #cheat-area h2 { margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; flex-shrink: 0; }
+        .cheat-tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; flex-shrink: 0; }
+        .tab-button { background: none; border: none; color: #888; padding: 10px 20px; cursor: pointer; font-size: 16px; border-bottom: 2px solid transparent; }
+        .tab-button.active { color: var(--neon-glow); border-bottom-color: var(--neon-glow); }
+        .tab-content { flex-grow: 1; overflow-y: auto; padding-right: 10px; } /* Keep scroll for content overflow */
+
+        /* Non-scrolling body and specific layout for iPhone 14 Pro Max */
+        @media (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) {
+            body { overflow: hidden; }
+            .tab-content { overflow-y: auto; /* Allow scrolling only in cheat list */ }
+            #app-main { height: calc(932px - 60px); /* Full height minus header */ }
+            .menu-card { padding: 30px 15px; font-size: 18px; }
+        }
+
         .cheat-category { background-color: var(--container-bg); border: 1px solid var(--border-color); border-radius: 15px; padding: 20px; margin-bottom: 25px; }
         .cheat-category h3 { margin-top: 0; color: var(--neon-glow); }
         .cheat-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #2a2a2a; }
@@ -193,18 +207,85 @@ const char index_html[] PROGMEM = R"raw(
                 usernameInput: document.getElementById('username-input'),
                 loginButton: document.getElementById('login-button'),
                 menuGrid: document.getElementById('menu-grid'),
+                appMain: document.getElementById('app-main'),
                 cheatArea: document.getElementById('cheat-area'),
                 gameList: document.getElementById('game-list'),
                 userNameEl: document.getElementById('user-name'),
                 backToMenuButton: document.getElementById('back-to-menu')
             };
             const gameData = {
-                "Warzone": { "Aimbot": [{ name: "Enable Aimbot", type: "toggle" }], "Visuals": [{ name: "Player ESP", type: "toggle" }] },
-                "BO6": { "Aimbot": [{ name: "Silent Aim", type: "toggle" }], "ESP": [{ name: "Box ESP", type: "toggle" }] },
-                "R6 Siege": { "Player": [{ name: "No Recoil", type: "toggle" }], "Gadget": [{ name: "Drone ESP", type: "toggle" }] },
-                "Fortnite": { "Combat": [{ name: "Aimbot", type: "toggle" }], "Visuals": [{ name: "Player ESP", type: "toggle" }] },
-                "GTA V": { "Player": [{ name: "God Mode", type: "toggle" }], "Money": [{ name: "Money Drop", type: "toggle" }] },
-                "Apex Legends": { "Aimbot": [{ name: "Prediction", type: "toggle" }], "Visuals": [{ name: "Glow ESP", type: "toggle" }] }
+                "Warzone": {
+                    "Toggles": [
+                        { name: "Player ESP", type: "toggle" }, { name: "Item ESP", type: "toggle" }, { name: "Radar Hack", type: "toggle" },
+                        { name: "No Recoil", type: "toggle" }, { name: "No Spread", type: "toggle" }, { name: "Heartbeat Sensor", type: "toggle" },
+                        { name: "Unlock All", type: "toggle" }, { name: "UAV Spam", type: "toggle" }, { name: "Wallhack", type: "toggle" },
+                        { name: "Rapid Fire", type: "toggle" }
+                    ],
+                    "Sliders": [
+                        { name: "Aimbot FOV", type: "slider", min: 1, max: 100 }, { name: "Aim Smoothing", type: "slider", min: 0, max: 100 },
+                        { name: "ESP Distance", type: "slider", min: 50, max: 1000 }, { name: "Recoil Control %", type: "slider", min: 0, max: 100 }
+                    ]
+                },
+                "BO6": {
+                    "Toggles": [
+                        { name: "Silent Aim", type: "toggle" }, { name: "Trigger Bot", type: "toggle" }, { name: "Box ESP", type: "toggle" },
+                        { name: "Skeleton ESP", type: "toggle" }, { name: "Visibility Check", type: "toggle" }, { name: "Auto-Ping", type: "toggle" },
+                        { name: "Fast Reload", type: "toggle" }, { name: "Infinite Sprint", type: "toggle" }, { name: "Chams", type: "toggle" },
+                        { name: "Spoof Name", type: "toggle" }
+                    ],
+                    "Sliders": [
+                        { name: "Aim Assist Strength", type: "slider", min: 0, max: 100 }, { name: "Field of View", type: "slider", min: 80, max: 150 },
+                        { name: "Spread Control %", type: "slider", min: 0, max: 100 }, { name: "Radar Zoom", type: "slider", min: 1, max: 5 }
+                    ]
+                },
+                "R6 Siege": {
+                    "Toggles": [
+                        { name: "Caveira ESP", type: "toggle" }, { name: "Gadget ESP", type: "toggle" }, { name: "No Flash", type: "toggle" },
+                        { name: "No Smoke", type: "toggle" }, { name: "Unlock All Ops", type: "toggle" }, { name: "Instant Lean", type: "toggle" },
+                        { name: "Silent Plant", type: "toggle" }, { name: "Drone Vision", type: "toggle" }, { name: "Player Chams", type: "toggle" },
+                        { name: "Weapon Chams", type: "toggle" }
+                    ],
+                    "Sliders": [
+                        { name: "Speed Hack %", type: "slider", min: 100, max: 130 }, { name: "Recoil Reduction %", type: "slider", min: 0, max: 100 },
+                        { name: "Spread Reduction %", type: "slider", min: 0, max: 100 }, { name: "Glow Intensity", type: "slider", min: 0, max: 10 }
+                    ]
+                },
+                "Fortnite": {
+                    "Toggles": [
+                        { name: "Player ESP", type: "toggle" }, { name: "Loot ESP", type: "toggle" }, { name: "Vehicle ESP", type: "toggle" },
+                        { name: "Building Helper", type: "toggle" }, { name: "Instant Revive", type: "toggle" }, { name: "First Shot Accuracy", type: "toggle" },
+                        { name: "No Bloom", type: "toggle" }, { name: "Air Walk", type: "toggle" }, { name: "Infinite Build", type: "toggle" },
+                        { name: "Aim While Jumping", type: "toggle" }
+                    ],
+                    "Sliders": [
+                        { name: "Aimbot Strength", type: "slider", min: 0, max: 100 }, { name: "Trigger Bot Delay (ms)", type: "slider", min: 0, max: 200 },
+                        { name: "Building Edit Speed", type: "slider", min: 100, max: 300 }, { name: "Loot Distance", type: "slider", min: 10, max: 500 }
+                    ]
+                },
+                "GTA V": {
+                    "Toggles": [
+                        { name: "God Mode", type: "toggle" }, { name: "Infinite Ammo", type: "toggle" }, { name: "Super Jump", type: "toggle" },
+                        { name: "Never Wanted", type: "toggle" }, { name: "Off the Radar", type: "toggle" }, { name: "Money Drop", type: "toggle" },
+                        { name: "Teleport to Waypoint", type: "toggle" }, { name: "Spawn Vehicle", type: "toggle" }, { name: "Rainbow Car", type: "toggle" },
+                        { name: "Infinite Special Ability", type: "toggle" }
+                    ],
+                    "Sliders": [
+                        { name: "RP Multiplier", type: "slider", min: 1, max: 100 }, { name: "Run Speed Multiplier", type: "slider", min: 1, max: 5 },
+                        { name: "Wanted Level", type: "slider", min: 0, max: 5 }, { name: "Vehicle Boost Strength", type: "slider", min: 1, max: 10 }
+                    ]
+                },
+                "Apex Legends": {
+                    "Toggles": [
+                        { name: "Glow ESP", type: "toggle" }, { name: "Item Glow", type: "toggle" }, { name: "Trigger Bot", type: "toggle" },
+                        { name: "Bunny Hop", type: "toggle" }, { name: "Auto Loot", type: "toggle" }, { name: "No Recoil", type: "toggle" },
+                        { name: "Heirloom Spoofer", type: "toggle" }, { name: "Charge Rifle Spam", type: "toggle" }, { name: "Third Person View", type: "toggle" },
+                        { name: "Silent Strafe", type: "toggle" }
+                    ],
+                    "Sliders": [
+                        { name: "Aimbot FOV", type: "slider", min: 1, max: 50 }, { name: "Aim Smoothing", type: "slider", min: 0, max: 100 },
+                        { name: "Glow Opacity %", type: "slider", min: 10, max: 100 }, { name: "Auto Loot Tier", type: "slider", min: 1, max: 4 }
+                    ]
+                }
             };
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const clickSound = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
@@ -247,6 +328,7 @@ const char index_html[] PROGMEM = R"raw(
                     card.addEventListener('click', () => {
                         playSound(clickSound);
                         loadGameUI(gameName);
+                        elements.appMain.classList.add('focus-mode');
                         showPage('app');
                     });
                     elements.menuGrid.appendChild(card);
@@ -279,41 +361,108 @@ const char index_html[] PROGMEM = R"raw(
             }
 
             function updateCheatArea(gameName) {
-                elements.cheatArea.innerHTML = '';
+                elements.cheatArea.innerHTML = ''; // Clear previous content
                 const title = document.createElement('h2');
                 title.textContent = `${gameName} Cheats`;
+
+                const tabsContainer = document.createElement('div');
+                tabsContainer.className = 'cheat-tabs';
+
+                const togglesTab = document.createElement('button');
+                togglesTab.className = 'tab-button active';
+                togglesTab.textContent = 'Toggles';
+
+                const slidersTab = document.createElement('button');
+                slidersTab.className = 'tab-button';
+                slidersTab.textContent = 'Sliders';
+
+                tabsContainer.appendChild(togglesTab);
+                tabsContainer.appendChild(slidersTab);
+
+                const togglesContent = document.createElement('div');
+                togglesContent.className = 'tab-content';
+
+                const slidersContent = document.createElement('div');
+                slidersContent.className = 'tab-content hidden';
+
+                // Populate Toggles
+                const toggleCheats = gameData[gameName]?.Toggles || [];
+                toggleCheats.forEach(cheat => {
+                    const itemDiv = createCheatItem(cheat);
+                    togglesContent.appendChild(itemDiv);
+                });
+
+                // Populate Sliders
+                const sliderCheats = gameData[gameName]?.Sliders || [];
+                sliderCheats.forEach(cheat => {
+                    const itemDiv = createCheatItem(cheat);
+                    slidersContent.appendChild(itemDiv);
+                });
+
+                // Tab switching logic
+                togglesTab.addEventListener('click', () => {
+                    togglesTab.classList.add('active');
+                    slidersTab.classList.remove('active');
+                    togglesContent.classList.remove('hidden');
+                    slidersContent.classList.add('hidden');
+                });
+                slidersTab.addEventListener('click', () => {
+                    slidersTab.classList.add('active');
+                    togglesTab.classList.remove('active');
+                    slidersContent.classList.remove('hidden');
+                    togglesContent.classList.add('hidden');
+                });
+
                 elements.cheatArea.appendChild(title);
-                const categoryData = gameData[gameName];
-                for (const categoryName in categoryData) {
-                    const categoryDiv = document.createElement('div');
-                    categoryDiv.className = 'cheat-category';
-                    const categoryTitle = document.createElement('h3');
-                    categoryTitle.textContent = categoryName;
-                    categoryDiv.appendChild(categoryTitle);
-                    categoryData[categoryName].forEach(cheat => {
-                        const itemDiv = document.createElement('div');
-                        itemDiv.className = 'cheat-item';
-                        const label = document.createElement('label');
-                        label.textContent = cheat.name;
-                        itemDiv.appendChild(label);
-                        const switchLabel = document.createElement('label');
-                        switchLabel.className = 'toggle-switch';
-                        const input = document.createElement('input');
-                        input.type = 'checkbox';
-                        input.addEventListener('change', (e) => {
-                            const action = e.target.checked ? 'Activated' : 'Deactivated';
-                            playSound(clickSound);
-                            showAlert(`${cheat.name} ${action}`, e.target.checked ? 'success' : 'error');
-                        });
-                        const sliderSpan = document.createElement('span');
-                        sliderSpan.className = 'toggle-slider';
-                        switchLabel.appendChild(input);
-                        switchLabel.appendChild(sliderSpan);
-                        itemDiv.appendChild(switchLabel);
-                        categoryDiv.appendChild(itemDiv);
+                elements.cheatArea.appendChild(tabsContainer);
+                elements.cheatArea.appendChild(togglesContent);
+                elements.cheatArea.appendChild(slidersContent);
+            }
+
+            function createCheatItem(cheat) {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'cheat-item';
+                const label = document.createElement('label');
+                label.textContent = cheat.name;
+                itemDiv.appendChild(label);
+
+                if (cheat.type === 'toggle') {
+                    const switchLabel = document.createElement('label');
+                    switchLabel.className = 'toggle-switch';
+                    const input = document.createElement('input');
+                    input.type = 'checkbox';
+                    input.addEventListener('change', (e) => {
+                        const action = e.target.checked ? 'Activated' : 'Deactivated';
+                        playSound(clickSound);
+                        showAlert(`${cheat.name} ${action}`, e.target.checked ? 'success' : 'error');
                     });
-                    elements.cheatArea.appendChild(categoryDiv);
+                    const sliderSpan = document.createElement('span');
+                    sliderSpan.className = 'toggle-slider';
+                    switchLabel.appendChild(input);
+                    switchLabel.appendChild(sliderSpan);
+                    itemDiv.appendChild(switchLabel);
+                } else if (cheat.type === 'slider') {
+                    const sliderContainer = document.createElement('div');
+                    sliderContainer.className = 'slider-container';
+                    const slider = document.createElement('input');
+                    slider.type = 'range';
+                    slider.min = cheat.min;
+                    slider.max = cheat.max;
+                    slider.value = cheat.default || cheat.min;
+                    slider.className = 'slider';
+                    const valueSpan = document.createElement('span');
+                    valueSpan.className = 'slider-value';
+                    valueSpan.textContent = slider.value;
+                    slider.addEventListener('input', () => valueSpan.textContent = slider.value);
+                    slider.addEventListener('change', () => {
+                        playSound(clickSound);
+                        showAlert(`${cheat.name} set to ${slider.value}`);
+                    });
+                    sliderContainer.appendChild(slider);
+                    sliderContainer.appendChild(valueSpan);
+                    itemDiv.appendChild(sliderContainer);
                 }
+                return itemDiv;
             }
 
             // --- Event Listeners & Initial Setup ---
@@ -327,6 +476,7 @@ const char index_html[] PROGMEM = R"raw(
 
             elements.backToMenuButton.addEventListener('click', () => {
                 playSound(clickSound);
+                elements.appMain.classList.remove('focus-mode');
                 showPage('menu');
             });
 
