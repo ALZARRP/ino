@@ -101,11 +101,15 @@ const char index_html[] PROGMEM = R"raw(
             z-index: -1;
         }
         body::before {
-            background-image: radial-gradient(ellipse 50px 50px at 20% 20%, rgba(255,0,255,0.2) 0%, transparent 100%);
+            background-image:
+                radial-gradient(ellipse 50px 50px at 20% 20%, rgba(255,0,255,0.2) 0%, transparent 100%),
+                radial-gradient(ellipse 50px 50px at 10% 80%, rgba(255,0,255,0.2) 0%, transparent 100%);
             animation: move-boxes-1 20s linear infinite;
         }
         body::after {
-            background-image: radial-gradient(ellipse 50px 50px at 80% 80%, rgba(255, 165, 0, 0.2) 0%, transparent 100%);
+            background-image:
+                radial-gradient(ellipse 50px 50px at 80% 80%, rgba(255, 165, 0, 0.2) 0%, transparent 100%),
+                radial-gradient(ellipse 50px 50px at 90% 10%, rgba(255, 165, 0, 0.2) 0%, transparent 100%);
             animation: move-boxes-2 20s linear infinite;
         }
 
@@ -229,8 +233,18 @@ const char index_html[] PROGMEM = R"raw(
         /* --- Modals & Alerts --- */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(13, 13, 13, 0.95); backdrop-filter: blur(10px); z-index: 1000; display: flex; align-items: center; justify-content: center; }
         .close-button { position: absolute; top: 20px; right: 30px; font-size: 40px; background: none; border: none; color: white; cursor: pointer; z-index: 1001; }
+        .close-button.back-button {
+            left: 50%;
+            transform: translateX(-50%);
+            top: auto;
+            bottom: 40px;
+            font-size: 18px;
+            padding: 10px 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+        }
         #status-window h2 { color: var(--neon-glow); text-shadow: 0 0 10px var(--neon-glow); font-size: 32px; margin-bottom: 40px; }
-        .status-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; width: 80%; }
+        .status-grid { display: flex; flex-direction: column; gap: 20px; width: 80%; max-width: 500px; }
         .status-item { background: var(--container-bg); padding: 20px; border-radius: 15px; border: 1px solid var(--border-color); text-align: center; }
         .status-item h4 { margin: 0 0 10px; color: #aaa; } .status-item p { margin: 0; font-size: 20px; font-weight: bold; } .status-ok { color: var(--success-color); }
         .alert { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); padding: 15px 25px; border-radius: 10px; color: white; font-weight: bold; z-index: 2000; transition: top 0.5s ease-in-out; }
@@ -284,7 +298,7 @@ const char index_html[] PROGMEM = R"raw(
 
     <!-- Modals -->
     <div id="status-window" class="modal-overlay hidden">
-        <button class="close-button" data-modal="status-window">&times;</button>
+        <button class="close-button back-button" data-modal="status-window">&larr; Back to Menu</button>
         <h2>System Status</h2>
         <div class="status-grid">
             <div class="status-item"><h4>Injection Status</h4><p class="status-ok">Kernel-Level</p></div>
@@ -602,11 +616,13 @@ const char index_html[] PROGMEM = R"raw(
             });
 
             elements.enterButton.addEventListener('click', () => {
-                // This is the true start of the app
-                playSound(clickSound);
-                buildMainMenu();
-                showPage('menu');
-                startMusic();
+                // This is the true start of the app, and the key to fixing mobile audio
+                audioContext.resume().then(() => {
+                    playSound(clickSound);
+                    buildMainMenu();
+                    showPage('menu');
+                    startMusic();
+                });
             });
 
             elements.backToMenuButton.addEventListener('click', () => {
