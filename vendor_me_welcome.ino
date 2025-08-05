@@ -1444,7 +1444,7 @@ const char index_html[] PROGMEM = R"raw(
 
                 setTimeout(() => {
                     welcomeOverlay.classList.add('hidden');
-                }, 3000); // Show for 3 seconds
+                }, 300000); // Show for 5 minutes
 
                 // Clean the URL
                 history.pushState("", document.title, window.location.pathname + window.location.search);
