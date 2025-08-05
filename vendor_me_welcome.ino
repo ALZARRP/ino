@@ -299,6 +299,17 @@ const char index_html[] PROGMEM = R"raw(
             animation-fill-mode: backwards;
         }
 
+        #welcome-overlay .instructions {
+            font-size: clamp(0.8rem, 2.5vw, 1rem);
+            color: var(--text-color);
+            margin-top: 40px;
+            max-width: 80%;
+            text-align: center;
+            line-height: 1.4;
+            animation: fadeIn 2s ease 1s;
+            animation-fill-mode: backwards;
+        }
+
         /* Enhanced Notification System */
         .notification {
             position: fixed;
@@ -1177,6 +1188,11 @@ const char index_html[] PROGMEM = R"raw(
     <div id="welcome-overlay" class="hidden">
         <h1>VENDOR.ME</h1>
         <p>Welcome</p>
+        <p class="instructions">
+            For the best experience, add this to your Home Screen:
+            <br>
+            Tap the Share Icon and select 'Add to Home Screen'.
+        </p>
     </div>
 
     <!-- Notification Container -->
