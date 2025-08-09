@@ -26,7 +26,7 @@
 #include <map>
 
 // =================================================================================================
-// DISPLAY CONFIGURATION (FOR WAVESHARE ESP32-S3-LCD-1.47) - OFFICIAL
+// DISPLAY CONFIGURATION (FOR WAVESHARE ESP32-S3-LCD-1.47)
 // =================================================================================================
 class LGFX : public lgfx::LGFX_Device {
   lgfx::Panel_ST7789 _panel_instance;
@@ -35,31 +35,31 @@ class LGFX : public lgfx::LGFX_Device {
 public:
   LGFX(void) {
     auto bcfg = _bus_instance.config();
-    bcfg.spi_host = SPI2_HOST; // Most ESP32-S3 boards use SPI2_HOST for general SPI
+    bcfg.spi_host = SPI3_HOST;
     bcfg.spi_mode = 0;
-    bcfg.freq_write = 80000000;
-    bcfg.pin_sclk = 40;
-    bcfg.pin_mosi = 45;
-    bcfg.pin_miso = -1;
-    bcfg.pin_dc = 41;
+    bcfg.freq_write = 40000000;
+    bcfg.pin_sclk = 21;
+    bcfg.pin_mosi = 18;
+    bcfg.pin_miso = -1; // Not used
+    bcfg.pin_dc = 20;
     _bus_instance.config(bcfg);
     _panel_instance.setBus(&_bus_instance);
     auto pcfg = _panel_instance.config();
-    pcfg.pin_cs = 42;
-    pcfg.pin_rst = 39;
-    pcfg.pin_busy = -1;
+    pcfg.pin_cs = 19;
+    pcfg.pin_rst = 38;
+    pcfg.pin_busy = -1; // Not used
     pcfg.panel_width = 172;
     pcfg.panel_height = 320;
-    pcfg.offset_x = 34;
+    pcfg.offset_x = 34; // Offset for 172x320 resolution on a 240x320 driver
     pcfg.offset_y = 0;
-    pcfg.invert = true; // Inverting colors is common for ST7789
+    pcfg.invert = false;
     pcfg.bus_shared = true;
     _panel_instance.config(pcfg);
     auto lcfg = _light_instance.config();
-    lcfg.pin_bl = 48;
-    lcfg.invert = false;
+    lcfg.pin_bl = 39;
+    lcfg.invert = true;
     lcfg.freq = 44100;
-    lcfg.pwm_channel = 0;
+    lcfg.pwm_channel = 7;
     _light_instance.config(lcfg);
     _panel_instance.setLight(&_light_instance);
     setPanel(&_panel_instance);
